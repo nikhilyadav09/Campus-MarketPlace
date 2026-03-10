@@ -11,20 +11,20 @@
     align-items: center;
     gap: var(--spacing-sm);
     padding: 6px 12px 6px 6px;
-    background: transparent;
-    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 9999px;
     /* Pill shape */
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    color: var(--text-primary);
+    color: #ffffff;
 }
 
 .user-menu-trigger:hover,
 .user-menu-trigger.active {
-    background: white;
-    box-shadow: var(--shadow-sm);
-    border-color: var(--border-color);
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 /* Namespaced to avoid collision with App.css */
