@@ -1,0 +1,20 @@
+.reservation-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.reservation-list-message {
+    padding: var(--spacing-xl);
+    text-align: center;
+    color: var(--text-secondary);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+}
+
+.reservation-list-error {
+    color: #dc2626;
+    background: #fef2f2;
+    border-color: #fecaca;
+}

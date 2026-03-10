@@ -1,0 +1,47 @@
+/* ItemGrid - Centered responsive grid layout */
+
+.item-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 28px;
+    padding: 16px 8px;
+    /* justify-content: center; - Removed for left alignment */
+}
+
+.item-grid-message {
+    grid-column: 1 / -1;
+    padding: var(--spacing-2xl);
+    text-align: center;
+    color: var(--text-secondary);
+    background: linear-gradient(135deg, var(--bg-card) 0%, #f8fafc 100%);
+    border: 2px dashed var(--border-color);
+    border-radius: 16px;
+    font-size: var(--font-size-base);
+}
+
+.item-grid-error {
+    color: #dc2626;
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    border-color: #fecaca;
+    border-style: solid;
+}
+
+/* Loading skeleton animation */
+.item-grid-loading {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+@media (max-width: 640px) {
+    .item-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 16px;
+        padding: 4px;
+    }
+}
+
+/* Ensure proper spacing when in container */
+.items-grid-container .item-grid {
+    padding: 0;
+}

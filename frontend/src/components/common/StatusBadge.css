@@ -1,0 +1,46 @@
+.status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 1px solid;
+}
+
+/* Clickable variant */
+.status-badge-clickable {
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.status-badge-clickable:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.status-badge-clickable:active {
+    transform: translateY(0);
+}
+
+/* Available - Green, clearly actionable */
+.status-badge-available {
+    background: var(--status-available-bg);
+    color: var(--status-available-text);
+    border-color: var(--status-available-border);
+}
+
+/* Reserved - Yellow/Amber, indicates pending state */
+.status-badge-reserved {
+    background: var(--status-reserved-bg);
+    color: var(--status-reserved-text);
+    border-color: var(--status-reserved-border);
+}
+
+/* Sold - Gray, terminal state, non-actionable */
+.status-badge-sold {
+    background: var(--status-sold-bg);
+    color: var(--status-sold-text);
+    border-color: var(--status-sold-border);
+}

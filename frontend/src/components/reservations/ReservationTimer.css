@@ -1,0 +1,28 @@
+.reservation-timer {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--status-reserved-bg);
+    border: 1px solid var(--status-reserved-border);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+}
+
+.reservation-timer.expired {
+    background: var(--status-sold-bg);
+    border-color: var(--status-sold-border);
+}
+
+.timer-label {
+    color: var(--text-secondary);
+}
+
+.timer-value {
+    font-weight: 600;
+    color: var(--status-reserved-text);
+}
+
+.reservation-timer.expired .timer-value {
+    color: var(--status-sold-text);
+}
