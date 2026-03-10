@@ -1,6 +1,7 @@
 // ItemCard component - Enhanced with product images and modern styling
 
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import StatusBadge from '../common/StatusBadge';
 import { ITEM_STATUS } from '../../constants/status';
 import './ItemCard.css';
@@ -16,6 +17,7 @@ import otherImg from '../../assets/category-other.png';
 
 function ItemCard({ item, currentUser, onStatusClick }) {
     const navigate = useNavigate();
+    const [imageLoadFailed, setImageLoadFailed] = useState(false);
 
     const formatPrice = (price) => {
         return new Intl.NumberFormat('en-IN', {
@@ -54,6 +56,7 @@ function ItemCard({ item, currentUser, onStatusClick }) {
 
     const isSold = item.status === ITEM_STATUS.SOLD;
     const isOwner = currentUser && item.seller_id === currentUser.id;
+    const shouldShowUploadedImage = item.image_url && item.image_url.trim() !== '' && !imageLoadFailed;
 
     const handleCardClick = () => {
         navigate(`/items/${item.id}`);
@@ -65,23 +68,40 @@ function ItemCard({ item, currentUser, onStatusClick }) {
         }
     };
 
+    const handleKeyDown = (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            handleCardClick();
+        }
+    };
+
     return (
         <div
             className={`item-card ${isSold ? 'item-card-sold' : ''}`}
             onClick={handleCardClick}
+            onKeyDown={handleKeyDown}
             role="button"
             tabIndex={0}
+            aria-label={`View details for ${item.title}`}
         >
             {/* Image Section */}
             <div className="item-card-image">
                 {/* Check for valid image_url (not null, not empty string, not whitespace) */}
-                {item.image_url && item.image_url.trim() !== '' ? (
-                    <img src={item.image_url} alt={item.title} />
+                {shouldShowUploadedImage ? (
+                    <img
+                        src={item.image_url}
+                        alt={item.title}
+                        loading="lazy"
+                        decoding="async"
+                        onError={() => setImageLoadFailed(true)}
+                    />
                 ) : getCategoryDefaultImage(item.category_name) ? (
                     <img
                         src={getCategoryDefaultImage(item.category_name)}
                         alt={`${item.category_name} item`}
                         className="category-default-img"
+                        loading="lazy"
+                        decoding="async"
                     />
                 ) : (
                     <div className={`item-card-placeholder placeholder-${getCategoryColor(item.category_name)}`}>

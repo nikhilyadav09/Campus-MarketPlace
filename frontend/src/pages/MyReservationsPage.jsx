@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useReservations } from '../hooks/useReservations';
-import { cancelReservation, confirmReservation } from '../api/reservations';
+import { cancelReservation } from '../api/reservations';
 import ReservationList from '../components/reservations/ReservationList';
 import { RESERVATION_STATUS } from '../constants/status';
 import './MyReservationsPage.css';

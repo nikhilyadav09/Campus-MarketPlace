@@ -78,10 +78,63 @@
         0 2px 4px -1px rgba(0, 0, 0, 0.04);
 }
 
+.search-form {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex: 1 1 320px;
+    min-width: 260px;
+}
+
+.search-input {
+    width: 100%;
+    border: 2px solid rgba(139, 92, 246, 0.15);
+    background: #fff;
+    border-radius: var(--radius-full);
+    padding: 10px 14px;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+}
+
+.search-btn,
+.reset-btn {
+    border: 0;
+    border-radius: var(--radius-full);
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-btn {
+    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.reset-btn {
+    background: #f8fafc;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.search-btn:hover,
+.reset-btn:hover {
+    transform: translateY(-1px);
+}
+
 .filter-group {
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
+    flex-wrap: wrap;
 }
 
 .filter-label {
@@ -135,6 +188,10 @@
     flex-shrink: 0;
 }
 
+.filter-dot-all {
+    background: #6366f1;
+}
+
 .filter-dot-available {
     background: var(--status-available-text);
 }
@@ -164,6 +221,33 @@
     background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
 }
 
+.sort-group {
+    margin-left: auto;
+}
+
+.sort-select {
+    border: 2px solid rgba(139, 92, 246, 0.15);
+    background: #fff;
+    border-radius: 12px;
+    padding: 8px 12px;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.sort-select:focus {
+    outline: none;
+    border-color: #8b5cf6;
+}
+
+.result-summary {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.result-query {
+    color: var(--text-primary);
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .item-list-page {
@@ -177,6 +261,21 @@
 
     .filter-group {
         flex-wrap: wrap;
+    }
+
+    .sort-group {
+        margin-left: 0;
+    }
+
+    .search-form {
+        flex-basis: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-btn,
+    .reset-btn {
+        width: 100%;
     }
 
     .filter-btn {

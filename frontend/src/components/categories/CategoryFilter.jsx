@@ -10,6 +10,7 @@ function CategoryFilter({ categories, selectedCategory, onCategoryChange, loadin
     return (
         <div className="category-filter">
             <button
+                type="button"
                 className={`category-btn ${!selectedCategory ? 'active' : ''}`}
                 onClick={() => onCategoryChange(null)}
             >
@@ -18,6 +19,7 @@ function CategoryFilter({ categories, selectedCategory, onCategoryChange, loadin
             {categories.map(category => (
                 <button
                     key={category.id}
+                    type="button"
                     className={`category-btn ${selectedCategory === category.id ? 'active' : ''}`}
                     onClick={() => onCategoryChange(category.id)}
                 >
