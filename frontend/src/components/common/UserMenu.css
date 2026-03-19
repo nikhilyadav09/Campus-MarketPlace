@@ -271,6 +271,23 @@
     border: 1px solid var(--border-color);
 }
 
+
+.user-menu-auth-actions--stacked {
+    flex-direction: column;
+}
+
+.user-menu-auth-actions-inline {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.user-menu-auth-link.google {
+    width: 100%;
+    background: #ffffff;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
 .user-menu-error {
     margin: 0 0 var(--spacing-sm);
     padding: 0.7rem 0.85rem;

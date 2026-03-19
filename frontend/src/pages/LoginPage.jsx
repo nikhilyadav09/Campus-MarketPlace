@@ -1,17 +1,26 @@
-import { useMemo, useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { getGoogleLoginUrl } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 import './AuthPage.css';
 
 function LoginPage() {
     const navigate = useNavigate();
     const location = useLocation();
+    const [searchParams] = useSearchParams();
     const { login, isAuthenticated } = useAuth();
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     const redirectTo = useMemo(() => location.state?.from?.pathname || '/', [location.state]);
+
+    useEffect(() => {
+        const googleError = searchParams.get('error');
+        if (googleError) {
+            setError(googleError);
+        }
+    }, [searchParams]);
 
     if (isAuthenticated) {
         return <Navigate to={redirectTo} replace />;
@@ -40,6 +49,10 @@ function LoginPage() {
         }
     };
 
+    const handleGoogleLogin = () => {
+        window.location.href = getGoogleLoginUrl(redirectTo);
+    };
+
     return (
         <div className="auth-page">
             <div className="auth-card">
@@ -49,6 +62,14 @@ function LoginPage() {
                     <p className="auth-subtitle">
                         Browse freely, then sign in to list items, reserve products, and manage your marketplace activity.
                     </p>
+                </div>
+
+                <div className="auth-oauth-stack">
+                    <button type="button" className="auth-google-button" onClick={handleGoogleLogin}>
+                        <span className="auth-google-icon">G</span>
+                        Continue with Google
+                    </button>
+                    <div className="auth-divider"><span>or use email</span></div>
                 </div>
 
                 <form className="auth-form" onSubmit={handleSubmit}>

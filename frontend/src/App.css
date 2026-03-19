@@ -117,7 +117,6 @@
 .modal-close:hover {
   background: var(--border-color);
 }
-
 .page-message {
   padding: var(--spacing-2xl);
   text-align: center;

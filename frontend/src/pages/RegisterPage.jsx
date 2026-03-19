@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { getGoogleLoginUrl } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 import './AuthPage.css';
 
@@ -17,12 +18,20 @@ const initialState = {
 function RegisterPage() {
     const navigate = useNavigate();
     const location = useLocation();
+    const [searchParams] = useSearchParams();
     const { register, isAuthenticated } = useAuth();
     const [formData, setFormData] = useState(initialState);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     const redirectTo = useMemo(() => location.state?.from?.pathname || '/', [location.state]);
+
+    useEffect(() => {
+        const googleError = searchParams.get('error');
+        if (googleError) {
+            setError(googleError);
+        }
+    }, [searchParams]);
 
     if (isAuthenticated) {
         return <Navigate to={redirectTo} replace />;
@@ -66,6 +75,10 @@ function RegisterPage() {
         }
     };
 
+    const handleGoogleSignup = () => {
+        window.location.href = getGoogleLoginUrl(redirectTo);
+    };
+
     return (
         <div className="auth-page">
             <div className="auth-card">
@@ -75,6 +88,14 @@ function RegisterPage() {
                     <p className="auth-subtitle">
                         Sign up with your campus email so you can list items, reserve products, and manage your own activity.
                     </p>
+                </div>
+
+                <div className="auth-oauth-stack">
+                    <button type="button" className="auth-google-button" onClick={handleGoogleSignup}>
+                        <span className="auth-google-icon">G</span>
+                        Continue with Google
+                    </button>
+                    <div className="auth-divider"><span>or create an email account</span></div>
                 </div>
 
                 <form className="auth-form" onSubmit={handleSubmit}>

@@ -262,3 +262,5 @@ if __name__ == "__main__":
         run_sql_file(schema_path)
     
     seed_data()
+    close_pool()
+    print("\n✓ Seeding complete!")

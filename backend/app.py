@@ -1,12 +1,23 @@
 from datetime import timedelta
 import os
+from urllib.parse import urlencode
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, redirect, request
 from flask_cors import CORS
 
 from db import init_db_pool
-from services.auth import get_authenticated_user, login_required, login_user, logout_user, register_user
+from services.auth import (
+    GoogleOAuthConfigError,
+    GoogleOAuthError,
+    complete_google_login,
+    get_authenticated_user,
+    get_google_login_url,
+    login_required,
+    login_user,
+    logout_user,
+    register_user,
+)
 from services.categories import get_category, list_categories
 from services.items import create_item, get_item, get_recently_listed, list_items
 from services.reservations import cancel_reservation, confirm_reservation, list_reservations, reserve_item
@@ -37,6 +48,12 @@ CORS(app, supports_credentials=True)
 
 # Initialize DB Pool
 init_db_pool(app)
+
+
+def build_frontend_error_redirect(message):
+    frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:5173').rstrip('/')
+    query = urlencode({'error': message})
+    return f'{frontend_url}/login?{query}'
 
 
 # =============================================================================
@@ -95,6 +112,31 @@ def auth_login_endpoint():
         return jsonify({'error': 'Invalid email or password'}), 401
 
     return jsonify({'user': user}), 200
+
+
+@app.route('/auth/google/login', methods=['GET'])
+def auth_google_login_endpoint():
+    next_path = request.args.get('next', '/')
+    try:
+        return redirect(get_google_login_url(next_path))
+    except GoogleOAuthConfigError as exc:
+        return redirect(build_frontend_error_redirect(str(exc)))
+
+
+@app.route('/auth/google/callback', methods=['GET'])
+def auth_google_callback_endpoint():
+    error = request.args.get('error')
+    if error:
+        return redirect(build_frontend_error_redirect(f'Google sign-in failed: {error}'))
+
+    try:
+        result = complete_google_login(
+            code=request.args.get('code'),
+            state=request.args.get('state'),
+        )
+        return redirect(result['frontend_redirect'])
+    except (GoogleOAuthConfigError, GoogleOAuthError) as exc:
+        return redirect(build_frontend_error_redirect(str(exc)))
 
 
 @app.route('/auth/logout', methods=['POST'])
