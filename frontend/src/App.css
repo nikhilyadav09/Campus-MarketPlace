@@ -117,3 +117,12 @@
 .modal-close:hover {
   background: var(--border-color);
 }
+.page-message {
+  padding: var(--spacing-2xl);
+  text-align: center;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}

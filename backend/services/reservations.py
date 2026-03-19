@@ -1,10 +1,12 @@
-from db import get_cursor, get_db
 from datetime import datetime, timedelta, timezone
+
+from db import get_cursor, get_db
+
 
 def list_reservations(buyer_id=None, status=None):
     """List reservations with full item details."""
     query = """
-        SELECT 
+        SELECT
             r.id,
             r.item_id,
             r.buyer_id,
@@ -42,10 +44,11 @@ def list_reservations(buyer_id=None, status=None):
         query += " AND r.status = %s"
         params.append(status)
     query += " ORDER BY r.created_at DESC"
-    
+
     with get_cursor() as cur:
         cur.execute(query, params)
         return cur.fetchall()
+
 
 def reserve_item(item_id, buyer_id, duration_hours=0.5):
     """
@@ -54,42 +57,55 @@ def reserve_item(item_id, buyer_id, duration_hours=0.5):
     Default reservation time is 30 minutes.
     """
     expires_at = datetime.now(timezone.utc) + timedelta(hours=duration_hours)
-    
-    conn = get_db() # Get connection explicitly for manual transaction control
+
+    conn = get_db()
     try:
         with conn.cursor() as cur:
-            # 1. Optimistic Update: Try to mark as reserved
-            cur.execute("""
-                UPDATE items 
-                SET status = 'reserved', updated_at = NOW()
-                WHERE id = %s AND status = 'available'
-            """, (item_id,))
-            
-            if cur.rowcount == 0:
+            cur.execute("SELECT seller_id, status FROM items WHERE id = %s FOR UPDATE", (item_id,))
+            item = cur.fetchone()
+
+            if not item:
                 conn.rollback()
-                return {"error": "Item not available"}
-            
-            # 2. Create Reservation
+                return {'error': 'Item not found'}
+            if str(item['seller_id']) == str(buyer_id):
+                conn.rollback()
+                return {'error': 'You cannot reserve your own item'}
+            if item['status'] != 'available':
+                conn.rollback()
+                return {'error': 'Item not available'}
+
+            cur.execute(
+                """
+                UPDATE items
+                SET status = 'reserved', updated_at = NOW()
+                WHERE id = %s
+                """,
+                (item_id,),
+            )
+
             try:
-                cur.execute("""
+                cur.execute(
+                    """
                     INSERT INTO reservations (item_id, buyer_id, expires_at, status)
                     VALUES (%s, %s, %s, 'active')
                     RETURNING id
-                """, (item_id, buyer_id, expires_at))
-            except Exception as e:
-                # Catch unique constraint violation if any
+                    """,
+                    (item_id, buyer_id, expires_at),
+                )
+            except Exception as exc:
                 conn.rollback()
-                return {"error": str(e)}
-            
-            res_id = cur.fetchone()['id']
-            conn.commit()
-            return {"reservation_id": res_id, "expires_at": expires_at}
-            
-    except Exception as e:
-        conn.rollback()
-        raise e
+                return {'error': str(exc)}
 
-def confirm_reservation(reservation_id):
+            reservation_id = cur.fetchone()['id']
+            conn.commit()
+            return {'reservation_id': reservation_id, 'expires_at': expires_at}
+
+    except Exception as exc:
+        conn.rollback()
+        raise exc
+
+
+def confirm_reservation(reservation_id, seller_id):
     """
     Complete a purchase.
     Transactional: Update item -> Update reservation.
@@ -97,35 +113,38 @@ def confirm_reservation(reservation_id):
     conn = get_db()
     try:
         with conn.cursor() as cur:
-            # Check reservation status
-            cur.execute("""
-                SELECT item_id, status FROM reservations 
-                WHERE id = %s FOR UPDATE
-            """, (reservation_id,))
-            res = cur.fetchone()
-            
-            if not res:
+            cur.execute(
+                """
+                SELECT r.item_id, r.status, i.seller_id
+                FROM reservations r
+                JOIN items i ON r.item_id = i.id
+                WHERE r.id = %s FOR UPDATE
+                """,
+                (reservation_id,),
+            )
+            reservation = cur.fetchone()
+
+            if not reservation:
                 conn.rollback()
-                return {"error": "Reservation not found"}
-            
-            if res['status'] != 'active':
+                return {'error': 'Reservation not found'}
+            if str(reservation['seller_id']) != str(seller_id):
                 conn.rollback()
-                return {"error": "Reservation not active"}
-                
-            item_id = res['item_id']
-            
-            # Update Item to SOLD
-            cur.execute("UPDATE items SET status = 'sold' WHERE id = %s", (item_id,))
-            
-            # Update Reservation to COMPLETED
+                return {'error': 'Not authorized to confirm this reservation'}
+            if reservation['status'] != 'active':
+                conn.rollback()
+                return {'error': 'Reservation not active'}
+
+            item_id = reservation['item_id']
+            cur.execute("UPDATE items SET status = 'sold', updated_at = NOW() WHERE id = %s", (item_id,))
             cur.execute("UPDATE reservations SET status = 'completed' WHERE id = %s", (reservation_id,))
-            
+
             conn.commit()
-            return {"status": "confirmed", "item_id": item_id}
-            
-    except Exception as e:
+            return {'status': 'confirmed', 'item_id': item_id}
+
+    except Exception as exc:
         conn.rollback()
-        raise e
+        raise exc
+
 
 def cancel_reservation(reservation_id, user_id):
     """
@@ -135,39 +154,34 @@ def cancel_reservation(reservation_id, user_id):
     conn = get_db()
     try:
         with conn.cursor() as cur:
-            # Check reservation exists and belongs to user (Buyer OR Seller)
-            cur.execute("""
-                SELECT r.item_id, r.buyer_id, r.status, i.seller_id 
+            cur.execute(
+                """
+                SELECT r.item_id, r.buyer_id, r.status, i.seller_id
                 FROM reservations r
                 JOIN items i ON r.item_id = i.id
                 WHERE r.id = %s FOR UPDATE
-            """, (reservation_id,))
-            res = cur.fetchone()
-            
-            if not res:
+                """,
+                (reservation_id,),
+            )
+            reservation = cur.fetchone()
+
+            if not reservation:
                 conn.rollback()
-                return {"error": "Reservation not found"}
-            
-            # Allow cancellation if user is the Buyer OR the Seller
-            if str(res['buyer_id']) != str(user_id) and str(res['seller_id']) != str(user_id):
+                return {'error': 'Reservation not found'}
+            if str(reservation['buyer_id']) != str(user_id) and str(reservation['seller_id']) != str(user_id):
                 conn.rollback()
-                return {"error": "Not authorized to cancel this reservation"}
-            
-            if res['status'] != 'active':
+                return {'error': 'Not authorized to cancel this reservation'}
+            if reservation['status'] != 'active':
                 conn.rollback()
-                return {"error": "Reservation not active"}
-                
-            item_id = res['item_id']
-            
-            # Update Reservation to CANCELLED
+                return {'error': 'Reservation not active'}
+
+            item_id = reservation['item_id']
             cur.execute("UPDATE reservations SET status = 'cancelled' WHERE id = %s", (reservation_id,))
-            
-            # Update Item back to AVAILABLE
             cur.execute("UPDATE items SET status = 'available', updated_at = NOW() WHERE id = %s", (item_id,))
-            
+
             conn.commit()
-            return {"status": "cancelled", "item_id": item_id}
-            
-    except Exception as e:
+            return {'status': 'cancelled', 'item_id': item_id}
+
+    except Exception as exc:
         conn.rollback()
-        raise e
+        raise exc

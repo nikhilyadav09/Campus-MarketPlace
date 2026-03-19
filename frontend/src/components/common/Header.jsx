@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import UserMenu from './UserMenu';
 import './Header.css';
 
-function Header({ currentUser, users, onUserChange }) {
+function Header({ currentUser }) {
     const location = useLocation();
 
     return (
@@ -71,11 +71,7 @@ function Header({ currentUser, users, onUserChange }) {
                     </Link>
                 </nav>
 
-                <UserMenu
-                    currentUser={currentUser}
-                    users={users}
-                    onUserChange={onUserChange}
-                />
+                <UserMenu currentUser={currentUser} />
             </div>
         </header>
     );
