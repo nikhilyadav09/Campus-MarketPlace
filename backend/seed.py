@@ -7,6 +7,7 @@ import os
 from datetime import datetime, timedelta, timezone
 from flask import Flask
 from dotenv import load_dotenv
+from werkzeug.security import generate_password_hash
 from db import init_db_pool, get_db, close_pool
 
 load_dotenv()
@@ -54,31 +55,34 @@ def seed_data():
             
             print("Creating users...")
             
+            default_password_hash = generate_password_hash('campus123')
+
             # User 1: Ajay
             cur.execute("""
-                INSERT INTO users (email, name, mobile_number, year, hostel_name, room_number) VALUES 
-                (%s, %s, %s, %s, %s, %s) RETURNING id
-            """, ('ajay@campus.edu', 'Ajay', '9798867386', '3rd Year', 'CV Raman', '229'))
+                INSERT INTO users (email, name, password_hash, mobile_number, year, hostel_name, room_number) VALUES 
+                (%s, %s, %s, %s, %s, %s, %s) RETURNING id
+            """, ('ajay@campus.edu', 'Ajay', default_password_hash, '9798867386', '3rd Year', 'CV Raman', '229'))
             ajay_id = cur.fetchone()['id']
             
             # User 2: Ritik
             cur.execute("""
-                INSERT INTO users (email, name, mobile_number, year, hostel_name, room_number) VALUES 
-                (%s, %s, %s, %s, %s, %s) RETURNING id
-            """, ('ritik@campus.edu', 'Ritik', '9798729015', '3rd Year', 'CV Raman', '256'))
+                INSERT INTO users (email, name, password_hash, mobile_number, year, hostel_name, room_number) VALUES 
+                (%s, %s, %s, %s, %s, %s, %s) RETURNING id
+            """, ('ritik@campus.edu', 'Ritik', default_password_hash, '9798729015', '3rd Year', 'CV Raman', '256'))
             ritik_id = cur.fetchone()['id']
             
             # User 3: Manu
             cur.execute("""
-                INSERT INTO users (email, name, mobile_number, year, hostel_name, room_number) VALUES 
-                (%s, %s, %s, %s, %s, %s) RETURNING id
-            """, ('manu@campus.edu', 'Manu', '8252126190', '3rd Year', 'CV Raman', '210'))
+                INSERT INTO users (email, name, password_hash, mobile_number, year, hostel_name, room_number) VALUES 
+                (%s, %s, %s, %s, %s, %s, %s) RETURNING id
+            """, ('manu@campus.edu', 'Manu', default_password_hash, '8252126190', '3rd Year', 'CV Raman', '210'))
             manu_id = cur.fetchone()['id']
             
             conn.commit()
             print(f"  Created user: Ajay (ID: {ajay_id}) - 📱 9798867386")
             print(f"  Created user: Ritik (ID: {ritik_id}) - 📱 9798729015")
             print(f"  Created user: Manu (ID: {manu_id}) - 📱 8252126190")
+            print("  Default password for seeded users: campus123")
 
        
             # CATEGORIES
@@ -258,5 +262,3 @@ if __name__ == "__main__":
         run_sql_file(schema_path)
     
     seed_data()
-    close_pool()
-    print("\n✓ Seeding complete!")
