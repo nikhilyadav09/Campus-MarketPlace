@@ -26,13 +26,14 @@ app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', 'f
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
 # CORS Configuration - Applied at APP LEVEL
-CORS(
-    app,
-    origins=["http://localhost:5173"],
-    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization"],
-    supports_credentials=True,
-)
+# CORS(
+#     app,
+#     origins=["http://localhost:5173"],
+#     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+#     allow_headers=["Content-Type", "Authorization"],
+#     supports_credentials=True,
+# )
+CORS(app, supports_credentials=True)
 
 # Initialize DB Pool
 init_db_pool(app)
