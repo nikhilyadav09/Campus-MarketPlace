@@ -23,10 +23,7 @@ function CreateItemPage({ currentUser }) {
         setError(null);
 
         try {
-            const newItem = await createItem({
-                ...formData,
-                seller_id: currentUser.id
-            });
+            const newItem = await createItem(formData);
             navigate(`/items/${newItem.id}`);
         } catch (err) {
             setError(err.message);
