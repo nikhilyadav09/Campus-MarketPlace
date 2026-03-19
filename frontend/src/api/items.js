@@ -1,6 +1,6 @@
 // Items API
 
-import { get, post, patch, del } from './client';
+import { del, get, patch, post } from './client';
 
 export function getItems(filters = {}) {
     const params = new URLSearchParams();
@@ -33,6 +33,6 @@ export function deleteItem(itemId) {
     return del(`/items/${itemId}`);
 }
 
-export function markItemSold(itemId, sellerId) {
-    return post(`/items/${itemId}/sold`, { seller_id: sellerId });
+export function markItemSold(itemId) {
+    return post(`/items/${itemId}/sold`, {});
 }
