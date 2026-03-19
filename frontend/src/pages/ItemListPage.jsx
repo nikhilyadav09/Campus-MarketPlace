@@ -27,7 +27,7 @@ const SORT_OPTIONS = [
 const VALID_STATUSES = new Set(STATUS_OPTIONS.map(option => option.value));
 const VALID_SORTS = new Set(SORT_OPTIONS.map(option => option.value));
 
-function ItemListPage({ currentUser, categories = [] }) {
+function ItemListPage({ currentUser, categories = [], categoriesLoading = false }) {
     const [searchParams, setSearchParams] = useSearchParams();
     const selectedCategory = searchParams.get('category') || null;
     const statusFilter = VALID_STATUSES.has(searchParams.get('status'))
@@ -36,18 +36,13 @@ function ItemListPage({ currentUser, categories = [] }) {
     const searchQuery = searchParams.get('q') || '';
     const sortBy = VALID_SORTS.has(searchParams.get('sort')) ? searchParams.get('sort') : 'newest';
 
-    // Only fetch when currentUser is available (prevents initial call without exclude_seller_id)
-    const shouldFetch = currentUser !== null;
-
-    // Build filters - exclude current user's items via backend
-    const filters = shouldFetch ? {
+    const filters = {
         ...(selectedCategory && { category_id: selectedCategory }),
         ...(statusFilter !== 'all' && { status: statusFilter }),
-        exclude_seller_id: currentUser.id
-    } : null;
+        ...(currentUser && { exclude_seller_id: currentUser.id })
+    };
 
     const { items, loading, error } = useItems(filters);
-    const categoriesLoading = categories.length === 0;
 
     const updateParams = (updates) => {
         const next = new URLSearchParams(searchParams);

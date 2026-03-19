@@ -2,7 +2,7 @@
 import { fetchMockAPI } from './mockApi';
 
 const API_BASE_URL = 'http://localhost:8000';
-const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
+const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true';
 
 async function fetchAPI(endpoint, options = {}) {
     if (USE_MOCK_DATA) {
@@ -16,6 +16,7 @@ async function fetchAPI(endpoint, options = {}) {
     };
 
     const config = {
+        credentials: 'include',
         ...options,
         headers: {
             ...defaultHeaders,
@@ -26,11 +27,10 @@ async function fetchAPI(endpoint, options = {}) {
     const response = await fetch(url, config);
 
     if (!response.ok) {
-        const error = await response.json().catch(() => ({ detail: 'An error occurred' }));
-        throw new Error(error.detail || `HTTP error! status: ${response.status}`);
+        const error = await response.json().catch(() => ({ error: 'An error occurred' }));
+        throw new Error(error.error || error.message || error.detail || `HTTP error! status: ${response.status}`);
     }
 
-    // Handle 204 No Content
     if (response.status === 204) {
         return null;
     }

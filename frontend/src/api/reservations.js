@@ -16,14 +16,14 @@ export function getReservation(reservationId) {
     return get(`/reservations/${reservationId}`);
 }
 
-export function createReservation(itemId, buyerId) {
-    return post('/reservations/', { item_id: itemId, buyer_id: buyerId });
+export function createReservation(itemId) {
+    return post('/reservations/', { item_id: itemId });
 }
 
 export function confirmReservation(reservationId) {
-    return post(`/reservations/${reservationId}/confirm`);
+    return post(`/reservations/${reservationId}/confirm`, {});
 }
 
-export function cancelReservation(reservationId, userId) {
-    return post(`/reservations/${reservationId}/cancel`, { user_id: userId });
+export function cancelReservation(reservationId) {
+    return post(`/reservations/${reservationId}/cancel`, {});
 }

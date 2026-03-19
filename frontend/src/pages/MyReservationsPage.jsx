@@ -21,7 +21,7 @@ function MyReservationsPage({ currentUser }) {
         setActionId(reservationId);
         setActionType('cancel');
         try {
-            await cancelReservation(reservationId, currentUser.id);
+            await cancelReservation(reservationId);
             refetch();
         } catch (err) {
             console.error('Cancel failed:', err);

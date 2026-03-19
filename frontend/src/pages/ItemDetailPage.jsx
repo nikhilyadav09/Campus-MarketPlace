@@ -71,7 +71,7 @@ function ItemDetailPage({ currentUser }) {
         setActionLoading(true);
         setActionError(null);
         try {
-            await createReservation(item.id, currentUser.id);
+            await createReservation(item.id);
             navigate('/my-reservations');
         } catch (err) {
             setActionError(err.message);
@@ -87,7 +87,7 @@ function ItemDetailPage({ currentUser }) {
         setActionLoading(true);
         setActionError(null);
         try {
-            await markItemSold(item.id, currentUser.id);
+            await markItemSold(item.id);
             refetch();
         } catch (err) {
             setActionError(err.message);
@@ -101,7 +101,7 @@ function ItemDetailPage({ currentUser }) {
         setActionLoading(true);
         setActionError(null);
         try {
-            await cancelReservation(reservation.id, currentUser.id);
+            await cancelReservation(reservation.id);
             setReservation(null);
             refetch();
         } catch (err) {
