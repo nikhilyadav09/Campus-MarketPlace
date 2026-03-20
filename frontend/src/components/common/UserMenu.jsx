@@ -152,7 +152,7 @@ function UserMenu({ currentUser }) {
                     <div className="user-menu-guest-card">
                         <div className="demo-users-header">Authentication required</div>
                         <h3>Sign in with Google</h3>
-                        <p>Guests can browse all listings. Use Google sign-in to post items, reserve products, and manage your account.</p>
+                        <p>You can browse all listings. Use Google sign-in to post items, reserve products, and manage your account.</p>
                         <div className="user-menu-auth-actions user-menu-auth-actions--stacked">
                             <button type="button" className="user-menu-auth-link google" onClick={handleGoogleLogin}>
                                 Continue with Google

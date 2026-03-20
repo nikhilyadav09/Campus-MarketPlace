@@ -31,10 +31,9 @@ function LoginPage() {
         <div className="auth-page">
             <div className="auth-card">
                 <div className="auth-header">
-                    <div className="auth-kicker">Google sign-in only</div>
                     <h1 className="auth-title">Continue with Google</h1>
                     <p className="auth-subtitle">
-                        Email/password login has been removed. Sign in with Google, then complete your student profile once.
+                        then complete your student profile once.
                     </p>
                 </div>
 
