@@ -235,3 +235,17 @@
         grid-template-columns: 1fr;
     }
 }
+
+.auth-oauth-stack--solo {
+    gap: 0;
+}
+
+.auth-oauth-stack--solo .auth-google-button {
+    width: 100%;
+}
+
+.auth-form-group input:disabled {
+    background: #eef2ff;
+    color: #64748b;
+    cursor: not-allowed;
+}

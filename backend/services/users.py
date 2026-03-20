@@ -1,6 +1,14 @@
 from werkzeug.security import check_password_hash, generate_password_hash
 from db import get_cursor
 
+PROFILE_FIELDS = ('mobile_number', 'year', 'hostel_name', 'room_number')
+
+
+def is_profile_complete(user_row):
+    if not user_row:
+        return False
+    return all((user_row.get(field) or '').strip() for field in PROFILE_FIELDS)
+
 
 def serialize_user(user_row):
     """Return a safe public representation of a user row."""
@@ -18,6 +26,7 @@ def serialize_user(user_row):
         'hostel_name': user_row.get('hostel_name'),
         'room_number': user_row.get('room_number'),
         'google_connected': bool(user_row.get('google_id')),
+        'profile_complete': is_profile_complete(user_row),
         'created_at': created_at.isoformat() if hasattr(created_at, 'isoformat') else created_at,
     }
 
@@ -128,6 +137,25 @@ def attach_google_account(user_id, google_id, name=None):
             RETURNING id, email, name, mobile_number, year, hostel_name, room_number, google_id, created_at
             """,
             (google_id, name, user_id),
+        )
+        return serialize_user(cur.fetchone())
+
+
+def update_user_profile(user_id, name=None, mobile_number=None, year=None, hostel_name=None, room_number=None):
+    """Update student profile fields after Google sign-in."""
+    with get_cursor() as cur:
+        cur.execute(
+            """
+            UPDATE users
+            SET name = %s,
+                mobile_number = %s,
+                year = %s,
+                hostel_name = %s,
+                room_number = %s
+            WHERE id = %s
+            RETURNING id, email, name, mobile_number, year, hostel_name, room_number, google_id, created_at
+            """,
+            (name, mobile_number, year, hostel_name, room_number, user_id),
         )
         return serialize_user(cur.fetchone())
 

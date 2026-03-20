@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { getCurrentUser, login as loginRequest, logout as logoutRequest, register as registerRequest } from '../api/auth';
+import { getCurrentUser, logout as logoutRequest, updateProfile as updateProfileRequest } from '../api/auth';
 
 const AuthContext = createContext(null);
 
@@ -24,14 +24,8 @@ export function AuthProvider({ children }) {
         refreshUser();
     }, [refreshUser]);
 
-    const login = useCallback(async (credentials) => {
-        const data = await loginRequest(credentials);
-        setUser(data?.user || null);
-        return data?.user || null;
-    }, []);
-
-    const register = useCallback(async (payload) => {
-        const data = await registerRequest(payload);
+    const updateProfile = useCallback(async (payload) => {
+        const data = await updateProfileRequest(payload);
         setUser(data?.user || null);
         return data?.user || null;
     }, []);
@@ -45,11 +39,10 @@ export function AuthProvider({ children }) {
         user,
         loading,
         isAuthenticated: Boolean(user),
-        login,
-        register,
+        updateProfile,
         logout,
         refreshUser,
-    }), [user, loading, login, register, logout, refreshUser]);
+    }), [user, loading, updateProfile, logout, refreshUser]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

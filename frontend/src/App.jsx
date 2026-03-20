@@ -13,6 +13,7 @@ import LoginPage from './pages/LoginPage';
 import MyItemsPage from './pages/MyItemsPage';
 import MyReservationsPage from './pages/MyReservationsPage';
 import RegisterPage from './pages/RegisterPage';
+import CompleteProfilePage from './pages/CompleteProfilePage';
 import './App.css';
 
 function App() {
@@ -42,6 +43,7 @@ function App() {
               <Route path="/items/:id" element={<ItemDetailPage currentUser={user} />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/complete-profile" element={<CompleteProfilePage />} />
               <Route
                 path="/items/new"
                 element={(

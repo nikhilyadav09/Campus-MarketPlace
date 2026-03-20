@@ -1,4 +1,4 @@
-import { get, post } from './client';
+import { get, patch, post } from './client';
 
 const API_BASE_URL = 'http://localhost:8000';
 
@@ -6,12 +6,8 @@ export function getCurrentUser() {
     return get('/auth/me');
 }
 
-export function login(credentials) {
-    return post('/auth/login', credentials);
-}
-
-export function register(userData) {
-    return post('/auth/register', userData);
+export function updateProfile(userData) {
+    return patch('/auth/profile', userData);
 }
 
 export function logout() {

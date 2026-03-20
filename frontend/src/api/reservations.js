@@ -17,7 +17,7 @@ export function getReservation(reservationId) {
 }
 
 export function createReservation(itemId) {
-    return post('/reservations/', { item_id: itemId });
+    return post(`/items/${itemId}/reserve`, {});
 }
 
 export function confirmReservation(reservationId) {

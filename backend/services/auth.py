@@ -9,12 +9,10 @@ from urllib.error import HTTPError, URLError
 from flask import jsonify, session
 
 from services.users import (
-    create_user,
     find_or_create_google_user,
-    get_user_record_by_email,
     get_user_record_by_id,
     serialize_user,
-    verify_user_credentials,
+    update_user_profile,
 )
 
 SESSION_USER_KEY = 'user_id'
@@ -33,6 +31,19 @@ class GoogleOAuthError(RuntimeError):
     pass
 
 
+class ProfileValidationError(ValueError):
+    pass
+
+
+REQUIRED_PROFILE_FIELDS = {
+    'name': 'Full name',
+    'mobile_number': 'Mobile number',
+    'year': 'Year',
+    'hostel_name': 'Hostel',
+    'room_number': 'Room number',
+}
+
+
 def get_authenticated_user():
     user_id = session.get(SESSION_USER_KEY)
     if not user_id:
@@ -41,29 +52,19 @@ def get_authenticated_user():
     return serialize_user(user)
 
 
-def login_user(email, password):
-    user = verify_user_credentials(email, password)
-    if not user:
-        return None
+def complete_profile(user_id, payload):
+    cleaned = {key: (payload.get(key) or '').strip() for key in REQUIRED_PROFILE_FIELDS}
+    missing = [label for key, label in REQUIRED_PROFILE_FIELDS.items() if not cleaned[key]]
+    if missing:
+        raise ProfileValidationError(f"Please complete all profile fields: {', '.join(missing)}.")
 
-    session[SESSION_USER_KEY] = user['id']
-    session.permanent = True
-    return user
-
-
-def register_user(email, name, password, mobile_number=None, year=None, hostel_name=None, room_number=None):
-    existing_user = get_user_record_by_email(email)
-    if existing_user:
-        raise ValueError('An account with this email already exists.')
-
-    user = create_user(
-        email=email,
-        name=name,
-        password=password,
-        mobile_number=mobile_number,
-        year=year,
-        hostel_name=hostel_name,
-        room_number=room_number,
+    user = update_user_profile(
+        user_id=user_id,
+        name=cleaned['name'],
+        mobile_number=cleaned['mobile_number'],
+        year=cleaned['year'],
+        hostel_name=cleaned['hostel_name'],
+        room_number=cleaned['room_number'],
     )
     session[SESSION_USER_KEY] = user['id']
     session.permanent = True
@@ -72,6 +73,7 @@ def register_user(email, name, password, mobile_number=None, year=None, hostel_n
 
 def logout_user():
     session.pop(SESSION_USER_KEY, None)
+
 
 
 def login_required(view_func):
@@ -106,6 +108,13 @@ def normalize_next_path(next_path):
     if not next_path or not str(next_path).startswith('/'):
         return '/'
     return next_path
+
+
+def build_frontend_redirect(frontend_url, path, **query_params):
+    query_params = {key: value for key, value in query_params.items() if value not in (None, '')}
+    query = urlencode(query_params)
+    suffix = f'?{query}' if query else ''
+    return f"{frontend_url}{normalize_next_path(path)}{suffix}"
 
 
 def get_google_login_url(next_path='/'):
@@ -192,7 +201,12 @@ def complete_google_login(code, state):
     session[SESSION_USER_KEY] = user['id']
     session.permanent = True
 
+    redirect_path = '/complete-profile' if not user.get('profile_complete') else normalize_next_path(next_path)
     return {
         'user': user,
-        'frontend_redirect': f"{config['frontend_url']}{normalize_next_path(next_path)}",
+        'frontend_redirect': build_frontend_redirect(
+            config['frontend_url'],
+            redirect_path,
+            next=normalize_next_path(next_path) if redirect_path == '/complete-profile' else None,
+        ),
     }

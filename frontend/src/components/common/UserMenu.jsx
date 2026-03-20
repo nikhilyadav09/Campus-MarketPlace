@@ -1,7 +1,7 @@
 // UserMenu - Dropdown menu for authenticated user actions
 
 import { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { getGoogleLoginUrl } from '../../api/auth';
 import { useAuth } from '../../context/AuthContext';
 import './UserMenu.css';
@@ -50,10 +50,10 @@ function UserMenu({ currentUser }) {
         navigate(path);
     };
 
-
     const handleGoogleLogin = () => {
         window.location.href = getGoogleLoginUrl('/');
     };
+
     const handleLogout = async () => {
         setActionError('');
         try {
@@ -123,6 +123,12 @@ function UserMenu({ currentUser }) {
                                 <span className="user-menu-item-icon">➕</span>
                                 <span className="user-menu-item-label">List an Item</span>
                             </button>
+                            {!currentUser.profile_complete && (
+                                <button className="user-menu-item" onClick={() => handleMenuItemClick('/complete-profile')}>
+                                    <span className="user-menu-item-icon">📝</span>
+                                    <span className="user-menu-item-label">Complete Profile</span>
+                                </button>
+                            )}
                         </div>
 
                         {(currentUser.year || currentUser.hostel_name || currentUser.room_number) && (
@@ -145,20 +151,12 @@ function UserMenu({ currentUser }) {
                 ) : (
                     <div className="user-menu-guest-card">
                         <div className="demo-users-header">Authentication required</div>
-                        <h3>Log in to sell and reserve</h3>
-                        <p>Guests can browse all listings. Sign in to post items, reserve products, and manage your account.</p>
+                        <h3>Sign in with Google</h3>
+                        <p>Guests can browse all listings. Use Google sign-in to post items, reserve products, and manage your account.</p>
                         <div className="user-menu-auth-actions user-menu-auth-actions--stacked">
                             <button type="button" className="user-menu-auth-link google" onClick={handleGoogleLogin}>
                                 Continue with Google
                             </button>
-                            <div className="user-menu-auth-actions-inline">
-                                <Link to="/login" className="user-menu-auth-link primary" onClick={() => setIsOpen(false)}>
-                                    Log In
-                                </Link>
-                                <Link to="/register" className="user-menu-auth-link secondary" onClick={() => setIsOpen(false)}>
-                                    Sign Up
-                                </Link>
-                            </div>
                         </div>
                     </div>
                 )}
