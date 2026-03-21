@@ -145,10 +145,39 @@
 .action-blocked {
     color: var(--text-secondary);
     font-size: var(--font-size-sm);
-    padding: var(--spacing-md);
-    background: var(--bg-secondary);
+    padding: 0;
+    background: transparent;
     border-radius: var(--radius-md);
     text-align: center;
+}
+
+.action-blocked:not(:has(.login-link)) {
+    padding: var(--spacing-md);
+    background: var(--bg-secondary);
+}
+
+.login-link {
+    display: block;
+    width: 100%;
+    color: #ffffff;
+    font-weight: 700;
+    text-decoration: none;
+    padding: 16px 32px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border-radius: var(--radius-md);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    font-size: var(--font-size-base);
+    cursor: pointer;
+    box-sizing: border-box;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.login-link:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff;
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .buyer-reservation-message,

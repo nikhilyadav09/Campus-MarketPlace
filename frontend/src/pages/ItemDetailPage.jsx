@@ -118,7 +118,7 @@ function ItemDetailPage({ currentUser }) {
         }
 
         if (!currentUser) {
-            return { canAct: false, reason: 'Select a user to take action.' };
+            return { canAct: false, reason: 'Login to buy item', isLoginRequired: true };
         }
 
         if (item.status === ITEM_STATUS.AVAILABLE) {
@@ -284,7 +284,13 @@ function ItemDetailPage({ currentUser }) {
                         </>
                     ) : (
                         <div className="action-blocked">
-                            {actionState.reason}
+                            {actionState.isLoginRequired ? (
+                                <Link to="/login" className="login-link">
+                                    {actionState.reason}
+                                </Link>
+                            ) : (
+                                actionState.reason
+                            )}
                         </div>
                     )}
                 </div>
