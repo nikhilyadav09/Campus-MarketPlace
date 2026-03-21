@@ -37,6 +37,11 @@ function HomePage({ categories: propCategories }) {
         'Other': '📦'
     };
 
+    const getHeroCategoryLink = (categoryName) => {
+        const matchedCategory = categories.find((category) => category.name === categoryName);
+        return matchedCategory ? `/items?category=${matchedCategory.id}` : '/items';
+    };
+
     if (loading) {
         return (
             <div className="home-page">
@@ -106,18 +111,30 @@ function HomePage({ categories: propCategories }) {
                     </div>
                 </div>
                 <div className="hero-visual">
-                    <div className="hero-card hero-card-1">
+                    <Link
+                        to={getHeroCategoryLink('Books')}
+                        className="hero-card hero-card-1"
+                        aria-label="Browse textbooks"
+                    >
                         <span className="hero-card-emoji">📚</span>
                         <span>Textbooks</span>
-                    </div>
-                    <div className="hero-card hero-card-2">
+                    </Link>
+                    <Link
+                        to={getHeroCategoryLink('Electronics')}
+                        className="hero-card hero-card-2"
+                        aria-label="Browse electronics"
+                    >
                         <span className="hero-card-emoji">💻</span>
                         <span>Electronics</span>
-                    </div>
-                    <div className="hero-card hero-card-3">
+                    </Link>
+                    <Link
+                        to={getHeroCategoryLink('Accessories')}
+                        className="hero-card hero-card-3"
+                        aria-label="Browse accessories"
+                    >
                         <span className="hero-card-emoji">🎒</span>
                         <span>Accessories</span>
-                    </div>
+                    </Link>
                 </div>
             </section>
 

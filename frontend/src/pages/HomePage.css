@@ -294,18 +294,21 @@
     border-radius: var(--radius-xl);
     font-weight: 700;
     color: var(--text-primary);
+    text-decoration: none;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     transform-style: preserve-3d;
-    cursor: default;
+    cursor: pointer;
 }
 
 .hero-card:hover {
     transform: translateY(-10px) scale(1.05) !important;
     /* Override animation transform on hover */
-    background: rgba(255, 255, 255, 0.85);
+    background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 48%, #bfdbfe 100%);
+    color: #1e3a8a;
+    border-color: rgba(147, 197, 253, 0.8);
     box-shadow:
         0 20px 25px -5px rgba(0, 0, 0, 0.1),
-        0 0 20px rgba(255, 255, 255, 0.4);
+        0 0 18px rgba(59, 130, 246, 0.28);
     /* Outer glow */
     z-index: 10;
 }
