@@ -126,6 +126,21 @@ def items_endpoint():
     if missing:
         return jsonify({'error': f"Missing fields: {', '.join(missing)}"}), 400
 
+    allow_purchase = bool(data.get('allow_purchase', True))
+    allow_lease = bool(data.get('allow_lease', False))
+    lease_percentage = data.get('lease_percentage', 10)
+
+    if not allow_purchase and not allow_lease:
+        return jsonify({'error': 'Enable at least one option: buy or lease'}), 400
+
+    try:
+        lease_percentage = float(lease_percentage)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'lease_percentage must be a number'}), 400
+
+    if lease_percentage < 4 or lease_percentage > 10:
+        return jsonify({'error': 'lease_percentage must be between 4 and 10'}), 400
+
     try:
         item = create_item(
             seller_id=current_user['id'],
@@ -134,11 +149,13 @@ def items_endpoint():
             price=data['price'],
             description=data.get('description'),
             image_url=data.get('image_url'),
+            allow_purchase=allow_purchase,
+            allow_lease=allow_lease,
+            lease_percentage=lease_percentage,
         )
         return jsonify(item), 201
     except Exception as exc:
         return jsonify({'error': str(exc)}), 400
-
 
 @app.route('/items/recently-listed', methods=['GET'])
 def recently_listed_endpoint():
@@ -238,13 +255,13 @@ def reservations_endpoint():
 
     data = request.json or {}
     item_id = data.get('item_id')
+    transaction_type = data.get('transaction_type', 'purchase')
     if not item_id:
         return jsonify({'error': 'item_id required'}), 400
 
-    result = reserve_item(item_id, current_user['id'])
+    result = reserve_item(item_id, current_user['id'], transaction_type=transaction_type)
     status_code = 201 if 'error' not in result else 409
     return jsonify(result), status_code
-
 
 @app.route('/reservations/<reservation_id>', methods=['GET'])
 def get_reservation_endpoint(reservation_id):
@@ -258,10 +275,11 @@ def get_reservation_endpoint(reservation_id):
 @app.route('/items/<item_id>/reserve', methods=['POST'])
 @login_required
 def reserve_item_endpoint(current_user, item_id):
-    result = reserve_item(item_id, current_user['id'])
+    data = request.json or {}
+    transaction_type = data.get('transaction_type', 'purchase')
+    result = reserve_item(item_id, current_user['id'], transaction_type=transaction_type)
     status_code = 201 if 'error' not in result else 409
     return jsonify(result), status_code
-
 
 @app.route('/reservations/<reservation_id>/confirm', methods=['POST'])
 @login_required

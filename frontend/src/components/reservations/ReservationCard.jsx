@@ -14,6 +14,7 @@ function ReservationCard({ reservation, onConfirm, onCancel, confirming, cancell
     // Use full item details from reservation
     const itemTitle = reservation.item_title || 'Unknown Item';
     const itemPrice = reservation.item_price;
+    const payableAmount = reservation.transaction_type === 'lease' ? reservation.lease_amount : itemPrice;
     const categoryName = reservation.category_name;
     const sellerName = reservation.seller_name || 'Seller';
     const imageUrl = reservation.item_image_url || 'https://placehold.co/80x80/e2e8f0/64748b?text=No+Image';
@@ -33,7 +34,15 @@ function ReservationCard({ reservation, onConfirm, onCancel, confirming, cancell
                     </Link>
                     <div className="reservation-item-meta">
                         {categoryName && <span className="reservation-category">{categoryName}</span>}
-                        {itemPrice && <span className="reservation-price">₹{Number(itemPrice).toFixed(2)}</span>}
+                        {payableAmount && (
+                            <span className="reservation-price">
+                                {reservation.transaction_type === 'lease' ? 'Lease ' : 'Buy '}
+                                ₹{Number(payableAmount).toFixed(2)}
+                            </span>
+                        )}
+                        <span className={`reservation-type-pill reservation-type-pill--${reservation.transaction_type}`}>
+                            {reservation.transaction_type === 'lease' ? 'Lease' : 'Buy'}
+                        </span>
                     </div>
                 </div>
 

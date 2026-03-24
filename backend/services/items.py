@@ -3,7 +3,8 @@ from db import get_cursor, get_db
 def list_items(category_id=None, seller_id=None, status=None, exclude_seller_id=None):
     """List all items with optional filters. Includes buyer info for sold/reserved items."""
     query = """
-        SELECT i.id, i.title, i.price, i.status, i.image_url, 
+        SELECT i.id, i.title, i.price, i.status, i.image_url,
+               i.allow_purchase, i.allow_lease, i.lease_percentage,
                c.name as category_name, i.description, i.seller_id,
                u.name as seller_name,
                buyer.id as buyer_id,
@@ -42,21 +43,35 @@ def list_items(category_id=None, seller_id=None, status=None, exclude_seller_id=
         cur.execute(query, params)
         return cur.fetchall()
 
-def create_item(seller_id, category_id, title, price, description=None, image_url=None):
+def create_item(
+    seller_id,
+    category_id,
+    title,
+    price,
+    description=None,
+    image_url=None,
+    allow_purchase=True,
+    allow_lease=False,
+    lease_percentage=10.0,
+):
     """Create a new item."""
     with get_cursor() as cur:
         cur.execute("""
-            INSERT INTO items (seller_id, category_id, title, price, description, image_url, status)
-            VALUES (%s, %s, %s, %s, %s, %s, 'available')
-            RETURNING id, title, price, status, image_url
-        """, (seller_id, category_id, title, price, description, image_url))
+            INSERT INTO items (
+                seller_id, category_id, title, price, description, image_url,
+                allow_purchase, allow_lease, lease_percentage, status
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'available')
+            RETURNING id, title, price, status, image_url, allow_purchase, allow_lease, lease_percentage
+        """, (seller_id, category_id, title, price, description, image_url, allow_purchase, allow_lease, lease_percentage))
         return cur.fetchone()
 
 def get_item(item_id):
     """Get item by ID."""
     with get_cursor() as cur:
         cur.execute("""
-            SELECT i.id, i.title, i.price, i.status, i.image_url, 
+            SELECT i.id, i.title, i.price, i.status, i.image_url,
+                   i.allow_purchase, i.allow_lease, i.lease_percentage,
                    i.description, i.seller_id, i.category_id,
                    i.created_at, i.updated_at,
                    c.name as category_name,
@@ -85,8 +100,9 @@ def get_recently_listed(limit=4):
     with get_cursor() as cur:
         cur.execute("""
             SELECT i.id, i.title, i.price, i.status, i.image_url,
-                   c.name as category_name, i.description, i.seller_id,
-                   u.name as seller_name
+                i.allow_purchase, i.allow_lease, i.lease_percentage,
+                c.name as category_name, i.description, i.seller_id,
+                u.name as seller_name
             FROM items i
             JOIN categories c ON i.category_id = c.id
             JOIN users u ON i.seller_id = u.id

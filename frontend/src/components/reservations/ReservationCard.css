@@ -92,6 +92,23 @@
     border-radius: var(--radius-md);
 }
 
+.reservation-type-pill {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+.reservation-type-pill--purchase {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.reservation-type-pill--lease {
+    background: #ccfbf1;
+    color: #115e59;
+}
+
 /* Status section - vertical layout for better spacing */
 .reservation-card-status {
     display: flex;

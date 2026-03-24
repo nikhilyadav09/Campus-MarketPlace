@@ -133,6 +133,10 @@ function ItemCard({ item, currentUser, onStatusClick }) {
 
                 {/* Title */}
                 <h3 className="item-title">{item.title}</h3>
+                <div className="item-mode-row">
+                    {item.allow_purchase && <span className="item-mode-pill">Buy</span>}
+                    {item.allow_lease && <span className="item-mode-pill item-mode-pill--lease">Lease</span>}
+                </div>
 
                 {/* Buyer Info for Sold/Reserved items (only for seller) */}
                 {isOwner && (isSold || item.status === ITEM_STATUS.RESERVED) && item.buyer_name && (
@@ -150,7 +154,11 @@ function ItemCard({ item, currentUser, onStatusClick }) {
 
                 {/* Price & Seller Footer */}
                 <div className="item-card-footer">
-                    <span className="item-price">{formatPrice(item.price)}</span>
+                    <span className="item-price">
+                        {item.allow_lease && !item.allow_purchase
+                            ? `Lease ₹${((Number(item.price) * Number(item.lease_percentage || 0)) / 100).toFixed(0)}`
+                            : formatPrice(item.price)}
+                    </span>
                     <span className="item-seller">
                         {item.seller_name ? (
                             isOwner ? 'Your listing' : `by ${item.seller_name}`

@@ -16,6 +16,7 @@ function ItemDetailPage({ currentUser }) {
     const navigate = useNavigate();
     const { item, loading, error, refetch } = useItem(id);
     const [reservation, setReservation] = useState(null);
+    const [transactionType, setTransactionType] = useState('purchase');
     const [actionLoading, setActionLoading] = useState(false);
     const [actionError, setActionError] = useState(null);
 
@@ -64,6 +65,12 @@ function ItemDetailPage({ currentUser }) {
             currency: 'INR'
         }).format(price);
     };
+    const getLeaseAmount = () => {
+        if (!item?.allow_lease) return null;
+        const leasePercentage = Number(item.lease_percentage || 0);
+        return (Number(item.price) * leasePercentage) / 100;
+    };
+
 
 
     const handleReserve = async () => {
@@ -71,7 +78,7 @@ function ItemDetailPage({ currentUser }) {
         setActionLoading(true);
         setActionError(null);
         try {
-            await createReservation(item.id);
+            await createReservation(item.id, transactionType);
             navigate('/my-reservations');
         } catch (err) {
             setActionError(err.message);
@@ -125,6 +132,12 @@ function ItemDetailPage({ currentUser }) {
             if (isOwner) {
                 return { canAct: false, reason: 'You own this item. Wait for a buyer to reserve it.' };
             }
+            if (transactionType === 'purchase' && !item.allow_purchase) {
+                return { canAct: false, reason: 'This listing is lease-only.' };
+            }
+            if (transactionType === 'lease' && !item.allow_lease) {
+                return { canAct: false, reason: 'This listing is buy-only.' };
+            }
             return { canAct: true, action: 'reserve' };
         }
 
@@ -156,6 +169,11 @@ function ItemDetailPage({ currentUser }) {
                 <h1 className="item-detail-title">{item.title}</h1>
 
                 <div className="item-detail-price">{formatPrice(item.price)}</div>
+                {item.allow_lease && (
+                    <p className="lease-price-note">
+                        Lease now for {formatPrice(getLeaseAmount())} ({Number(item.lease_percentage).toFixed(1)}% of total price)
+                    </p>
+                )}
 
                 {item.description && (
                     <div className="item-detail-section">
@@ -259,11 +277,31 @@ function ItemDetailPage({ currentUser }) {
 
                 {/* Action section - always visible */}
                 <div className="item-actions">
+                        {item.status === ITEM_STATUS.AVAILABLE && !isOwner && (
+                        <div className="transaction-toggle" role="group" aria-label="Choose buy or lease">
+                            <button
+                                type="button"
+                                className={`toggle-btn ${transactionType === 'purchase' ? 'active' : ''}`}
+                                disabled={!item.allow_purchase}
+                                onClick={() => setTransactionType('purchase')}
+                            >
+                                Buy
+                            </button>
+                            <button
+                                type="button"
+                                className={`toggle-btn ${transactionType === 'lease' ? 'active' : ''}`}
+                                disabled={!item.allow_lease}
+                                onClick={() => setTransactionType('lease')}
+                            >
+                                Lease
+                            </button>
+                        </div>
+                    )}
                     {actionState.canAct ? (
                         <>
                             {actionState.action === 'reserve' && (
                                 <Button variant="primary" size="large" onClick={handleReserve} loading={actionLoading}>
-                                    Reserve Item
+                                    {transactionType === 'lease' ? 'Reserve for Lease' : 'Reserve to Buy'}
                                 </Button>
                             )}
                             {actionState.action === 'confirm-sale' && (

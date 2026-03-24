@@ -67,6 +67,12 @@
     margin-bottom: var(--spacing-lg);
 }
 
+.lease-price-note {
+    margin: -8px 0 var(--spacing-lg) 0;
+    color: #0f766e;
+    font-weight: 600;
+}
+
 .item-detail-section {
     margin-bottom: var(--spacing-lg);
 }
@@ -135,6 +141,34 @@
 
 .item-actions {
     padding-top: var(--spacing-md);
+}
+.transaction-toggle {
+    display: inline-flex;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    padding: 4px;
+    margin-bottom: var(--spacing-md);
+}
+
+.toggle-btn {
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 600;
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+.toggle-btn.active {
+    background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+    color: #fff;
+}
+
+.toggle-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
 }
 
 .action-group {

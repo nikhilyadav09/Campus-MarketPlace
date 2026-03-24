@@ -55,6 +55,9 @@ CREATE TABLE items (
     description TEXT,
     image_url VARCHAR(500),
     price NUMERIC(10, 2) NOT NULL,
+    allow_purchase BOOLEAN NOT NULL DEFAULT TRUE,
+    allow_lease BOOLEAN NOT NULL DEFAULT FALSE,
+    lease_percentage NUMERIC(5, 2) NOT NULL DEFAULT 10.00,
     status VARCHAR(20) NOT NULL DEFAULT 'available',
     seller_id UUID NOT NULL,
     category_id UUID NOT NULL,
@@ -64,6 +67,10 @@ CREATE TABLE items (
     -- Constraints
     CONSTRAINT chk_items_price_non_negative 
         CHECK (price >= 0),
+    CONSTRAINT chk_items_listing_mode_valid
+        CHECK (allow_purchase OR allow_lease),
+    CONSTRAINT chk_items_lease_percentage_valid
+        CHECK (lease_percentage >= 4.00 AND lease_percentage <= 10.00),
     CONSTRAINT chk_items_status_valid 
         CHECK (status IN ('available', 'reserved', 'sold')),
     
@@ -91,6 +98,8 @@ CREATE TABLE reservations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     item_id UUID NOT NULL,
     buyer_id UUID NOT NULL,
+    transaction_type VARCHAR(20) NOT NULL DEFAULT 'purchase',
+    lease_amount NUMERIC(10, 2),
     status VARCHAR(20) NOT NULL DEFAULT 'active',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     expires_at TIMESTAMPTZ NOT NULL,
@@ -98,6 +107,13 @@ CREATE TABLE reservations (
     -- Constraints
     CONSTRAINT chk_reservations_status_valid 
         CHECK (status IN ('active', 'completed', 'cancelled', 'expired')),
+    CONSTRAINT chk_reservations_transaction_type_valid
+        CHECK (transaction_type IN ('purchase', 'lease')),
+    CONSTRAINT chk_reservations_lease_amount_valid
+        CHECK (
+            (transaction_type = 'purchase' AND lease_amount IS NULL)
+            OR (transaction_type = 'lease' AND lease_amount IS NOT NULL AND lease_amount >= 0)
+        ),
     
     -- Foreign Keys
     CONSTRAINT fk_reservations_item 

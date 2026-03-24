@@ -16,8 +16,8 @@ export function getReservation(reservationId) {
     return get(`/reservations/${reservationId}`);
 }
 
-export function createReservation(itemId) {
-    return post(`/items/${itemId}/reserve`, {});
+export function createReservation(itemId, transactionType = 'purchase') {
+    return post(`/items/${itemId}/reserve`, { transaction_type: transactionType });
 }
 
 export function confirmReservation(reservationId) {

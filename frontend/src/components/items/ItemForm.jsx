@@ -10,7 +10,10 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
         title: initialData?.title || '',
         description: initialData?.description || '',
         price: initialData?.price || '',
-        category_id: initialData?.category_id || ''
+        category_id: initialData?.category_id || '',
+        allow_purchase: initialData?.allow_purchase ?? true,
+        allow_lease: initialData?.allow_lease ?? false,
+        lease_percentage: initialData?.lease_percentage ?? 10
     });
 
     const [errors, setErrors] = useState({});
@@ -26,13 +29,23 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
         if (!formData.category_id) {
             newErrors.category_id = 'Category is required';
         }
+        if (!formData.allow_purchase && !formData.allow_lease) {
+            newErrors.listing_mode = 'Enable at least one option: Buy or Lease';
+        }
+        if (formData.allow_lease) {
+            const leasePercentage = parseFloat(formData.lease_percentage);
+            if (Number.isNaN(leasePercentage) || leasePercentage < 4 || leasePercentage > 10) {
+                newErrors.lease_percentage = 'Lease percentage must be between 4% and 10%';
+            }
+        }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        const { name, value, type, checked } = e.target;
+        const nextValue = type === 'checkbox' ? checked : value;
+        setFormData(prev => ({ ...prev, [name]: nextValue }));
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
@@ -43,7 +56,8 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
         if (validate()) {
             onSubmit({
                 ...formData,
-                price: parseFloat(formData.price)
+                price: parseFloat(formData.price),
+                lease_percentage: parseFloat(formData.lease_percentage)
                 // category_id stays as string (UUID)
             });
         }
@@ -66,51 +80,48 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
             </div>
 
             <div className="form-group">
-                <label htmlFor="description">Description</label>
-                <textarea
-                    id="description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    placeholder="Describe your item..."
-                    rows={4}
-                />
+                <label>Listing type *</label>
+                <div className="listing-mode-options">
+                    <label className="toggle-option">
+                        <input
+                            type="checkbox"
+                            name="allow_purchase"
+                            checked={formData.allow_purchase}
+                            onChange={handleChange}
+                        />
+                        <span>Allow Buy</span>
+                    </label>
+                    <label className="toggle-option">
+                        <input
+                            type="checkbox"
+                            name="allow_lease"
+                            checked={formData.allow_lease}
+                            onChange={handleChange}
+                        />
+                        <span>Allow Lease</span>
+                    </label>
+                </div>
+                {errors.listing_mode && <span className="error-message">{errors.listing_mode}</span>}
             </div>
 
-            <div className="form-row">
+            {formData.allow_lease && (
                 <div className="form-group">
-                    <label htmlFor="price">Price (₹) *</label>
+                    <label htmlFor="lease_percentage">Lease amount (% of total price)</label>
                     <input
                         type="number"
-                        id="price"
-                        name="price"
-                        value={formData.price}
+                        id="lease_percentage"
+                        name="lease_percentage"
+                        value={formData.lease_percentage}
                         onChange={handleChange}
-                        placeholder="0.00"
-                        min="0"
-                        step="0.01"
-                        className={errors.price ? 'error' : ''}
+                        min="4"
+                        max="10"
+                        step="0.1"
+                        className={errors.lease_percentage ? 'error' : ''}
                     />
-                    {errors.price && <span className="error-message">{errors.price}</span>}
+                    <small className="form-helper">Recommended industry range: 4% to 10% of item price.</small>
+                    {errors.lease_percentage && <span className="error-message">{errors.lease_percentage}</span>}
                 </div>
-
-                <div className="form-group">
-                    <label htmlFor="category_id">Category *</label>
-                    <select
-                        id="category_id"
-                        name="category_id"
-                        value={formData.category_id}
-                        onChange={handleChange}
-                        className={errors.category_id ? 'error' : ''}
-                    >
-                        <option value="">Select a category</option>
-                        {categories.map(cat => (
-                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                        ))}
-                    </select>
-                    {errors.category_id && <span className="error-message">{errors.category_id}</span>}
-                </div>
-            </div>
+            )}
 
             <div className="form-actions">
                 <Button type="submit" variant="primary" size="large" loading={loading}>
