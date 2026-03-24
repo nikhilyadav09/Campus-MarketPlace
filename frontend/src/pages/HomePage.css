@@ -763,3 +763,112 @@
         text-align: center;
     }
 }
+
+@media (max-width: 768px) {
+    .home-page {
+        gap: var(--spacing-xl);
+        padding-bottom: var(--spacing-xl);
+    }
+
+    .hero {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+        min-height: auto;
+        padding: 1.25rem;
+        border-radius: 22px;
+        text-align: left;
+    }
+
+    .hero-content {
+        padding-left: 0;
+    }
+
+    .hero-title {
+        font-size: clamp(2rem, 9vw, 2.8rem);
+        line-height: 1.05;
+        margin-bottom: 0.9rem;
+    }
+
+    .hero-subtitle {
+        font-size: 0.98rem;
+        margin-bottom: 1.1rem;
+        max-width: 100%;
+    }
+
+    .hero-actions {
+        flex-direction: column;
+        margin-bottom: 1rem;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+        justify-content: center;
+        padding: 0.95rem 1rem;
+    }
+
+    .hero-stats {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+
+    .stat {
+        flex: 1 1 calc(50% - 0.75rem);
+        min-width: 120px;
+    }
+
+    .stat-divider,
+    .hero-visual,
+    .hero-shapes {
+        display: none;
+    }
+
+    .features,
+    .categories-section,
+    .featured-section {
+        padding: 0;
+    }
+
+    .features-grid,
+    .categories-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .feature-card {
+        text-align: left;
+        padding: 1.1rem;
+    }
+
+    .feature-icon {
+        margin: 0 0 1rem;
+        width: 64px;
+        height: 64px;
+    }
+
+    .category-card {
+        flex-direction: row;
+        justify-content: flex-start;
+        padding: 1rem;
+    }
+
+    .cta-section {
+        padding: 1.5rem 1.1rem;
+        border-radius: 22px;
+    }
+
+    .cta-content h2 {
+        font-size: 1.8rem;
+    }
+
+    .cta-content p {
+        font-size: 1rem;
+    }
+
+    .section-link {
+        font-size: var(--font-size-base);
+    }
+}

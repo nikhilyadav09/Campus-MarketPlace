@@ -1,11 +1,15 @@
-// Header component - Enhanced with campus branding
-
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import UserMenu from './UserMenu';
 import './Header.css';
 
 function Header({ currentUser }) {
     const location = useLocation();
+    const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+    useEffect(() => {
+        setIsMobileNavOpen(false);
+    }, [location.pathname]);
 
     return (
         <header className="header">
@@ -15,7 +19,23 @@ function Header({ currentUser }) {
                     <span className="logo-text">Campus Marketplace</span>
                 </Link>
 
-                <nav className="nav">
+                <div className="header-right">
+                    <button
+                        type="button"
+                        className={`nav-toggle ${isMobileNavOpen ? 'active' : ''}`}
+                        aria-label={isMobileNavOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                        aria-expanded={isMobileNavOpen}
+                        onClick={() => setIsMobileNavOpen((prev) => !prev)}
+                    >
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+
+                    <UserMenu currentUser={currentUser} />
+                </div>
+
+                <nav className={`nav ${isMobileNavOpen ? 'open' : ''}`}>
                     <Link
                         to="/"
                         className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
@@ -26,6 +46,7 @@ function Header({ currentUser }) {
                         </svg>
                         Home
                     </Link>
+
                     <Link
                         to="/items"
                         className={`nav-link ${location.pathname === '/items' ? 'active' : ''}`}
@@ -36,6 +57,7 @@ function Header({ currentUser }) {
                         </svg>
                         Browse
                     </Link>
+
                     <Link
                         to="/items/new"
                         className={`nav-link ${location.pathname === '/items/new' ? 'active' : ''}`}
@@ -46,6 +68,7 @@ function Header({ currentUser }) {
                         </svg>
                         List Item
                     </Link>
+
                     <Link
                         to="/my-items"
                         className={`nav-link ${location.pathname === '/my-items' ? 'active' : ''}`}
@@ -57,6 +80,7 @@ function Header({ currentUser }) {
                         </svg>
                         My Items
                     </Link>
+
                     <Link
                         to="/my-reservations"
                         className={`nav-link ${location.pathname === '/my-reservations' ? 'active' : ''}`}
@@ -70,9 +94,16 @@ function Header({ currentUser }) {
                         Reservations
                     </Link>
                 </nav>
-
-                <UserMenu currentUser={currentUser} />
             </div>
+
+            {isMobileNavOpen && (
+                <button
+                    type="button"
+                    className="mobile-nav-backdrop"
+                    aria-label="Close navigation"
+                    onClick={() => setIsMobileNavOpen(false)}
+                />
+            )}
         </header>
     );
 }

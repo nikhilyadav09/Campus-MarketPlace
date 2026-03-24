@@ -35,9 +35,9 @@
 
 @media (max-width: 640px) {
     .item-grid {
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-        gap: 16px;
-        padding: 4px;
+        grid-template-columns: 1fr;
+        gap: 14px;
+        padding: 4px 0;
     }
 }
 

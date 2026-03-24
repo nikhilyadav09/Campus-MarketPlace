@@ -38,3 +38,18 @@
     color: white;
     box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
+
+@media (max-width: 768px) {
+    .category-filter {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        scrollbar-width: thin;
+    }
+
+    .category-btn {
+        flex: 0 0 auto;
+        padding: 9px 14px;
+        font-size: 13px;
+    }
+}
