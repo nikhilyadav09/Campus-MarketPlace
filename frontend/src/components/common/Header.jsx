@@ -19,22 +19,6 @@ function Header({ currentUser }) {
                     <span className="logo-text">Campus Marketplace</span>
                 </Link>
 
-                <div className="header-right">
-                    <button
-                        type="button"
-                        className={`nav-toggle ${isMobileNavOpen ? 'active' : ''}`}
-                        aria-label={isMobileNavOpen ? 'Close navigation menu' : 'Open navigation menu'}
-                        aria-expanded={isMobileNavOpen}
-                        onClick={() => setIsMobileNavOpen((prev) => !prev)}
-                    >
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </button>
-
-                    <UserMenu currentUser={currentUser} />
-                </div>
-
                 <nav className={`nav ${isMobileNavOpen ? 'open' : ''}`}>
                     <Link
                         to="/"
@@ -94,6 +78,22 @@ function Header({ currentUser }) {
                         Reservations
                     </Link>
                 </nav>
+
+                <div className="header-right">
+                    <button
+                        type="button"
+                        className={`nav-toggle ${isMobileNavOpen ? 'active' : ''}`}
+                        aria-label={isMobileNavOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                        aria-expanded={isMobileNavOpen}
+                        onClick={() => setIsMobileNavOpen((prev) => !prev)}
+                    >
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+
+                    <UserMenu currentUser={currentUser} />
+                </div>
             </div>
 
             {isMobileNavOpen && (
