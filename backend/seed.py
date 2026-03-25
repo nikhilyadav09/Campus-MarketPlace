@@ -107,8 +107,12 @@ def seed_data():
                 {
                     'title': 'HP Pavilion 15 Laptop',
                     'description': 'Intel i5, 16GB RAM, 512GB SSD. Ideal for coding, DSA, and projects.',
-                    'image_url': None,  # Will use category image
-                    'price': 720.00,
+                    'image_url': None,
+                    'original_price': 1800.00,
+                    'sell_price': 720.00,
+                    'allow_purchase': True,
+                    'allow_lease': True,
+                    'lease_price_per_month': 90.00,
                     'status': 'available',
                     'category': 'Electronics',
                     'seller': ajay_id
@@ -116,8 +120,12 @@ def seed_data():
                 {
                     'title': 'CSE Textbook Set (DSA + OS)',
                     'description': 'CLRS Data Structures + Operating System Concepts. Lightly used.',
-                    'image_url': None,  # Will use category image
-                    'price': 55.00,
+                    'image_url': None,
+                    'original_price': 150.00,
+                    'sell_price': 55.00,
+                    'allow_purchase': True,
+                    'allow_lease': False,
+                    'lease_price_per_month': None,
                     'status': 'available',
                     'category': 'Books',
                     'seller': ajay_id
@@ -127,8 +135,12 @@ def seed_data():
                 {
                     'title': 'Winter Hoodie (Size L)',
                     'description': 'Warm cotton hoodie, perfect for hostel winters. Worn twice.',
-                    'image_url': None,  # Will use category image
-                    'price': 18.00,
+                    'image_url': None,
+                    'original_price': 50.00,
+                    'sell_price': 18.00,
+                    'allow_purchase': True,
+                    'allow_lease': True,
+                    'lease_price_per_month': 3.00,
                     'status': 'available',
                     'category': 'Clothing',
                     'seller': ritik_id
@@ -136,8 +148,12 @@ def seed_data():
                 {
                     'title': 'Mechanical Keyboard (Red Switches)',
                     'description': 'Ant Esports mechanical keyboard. Smooth typing for coding.',
-                    'image_url': None,  # Will use category image
-                    'price': 40.00,
+                    'image_url': None,
+                    'original_price': 100.00,
+                    'sell_price': 40.00,
+                    'allow_purchase': False,
+                    'allow_lease': True,
+                    'lease_price_per_month': 5.00,
                     'status': 'available',
                     'category': 'Electronics',
                     'seller': ritik_id
@@ -147,8 +163,12 @@ def seed_data():
                 {
                     'title': 'Engineering Mathematics Book',
                     'description': 'Advanced Engineering Mathematics by Erwin Kreyszig. Good condition.',
-                    'image_url': None,  # Will use category image
-                    'price': 22.00,
+                    'image_url': None,
+                    'original_price': 60.00,
+                    'sell_price': 22.00,
+                    'allow_purchase': True,
+                    'allow_lease': False,
+                    'lease_price_per_month': None,
                     'status': 'sold',
                     'category': 'Books',
                     'seller': manu_id
@@ -156,8 +176,12 @@ def seed_data():
                 {
                     'title': 'Laptop Backpack (Water Resistant)',
                     'description': '15.6-inch laptop backpack with multiple compartments.',
-                    'image_url': None,  # Will use category image
-                    'price': 25.00,
+                    'image_url': None,
+                    'original_price': 70.00,
+                    'sell_price': 25.00,
+                    'allow_purchase': True,
+                    'allow_lease': True,
+                    'lease_price_per_month': 4.00,
                     'status': 'available',
                     'category': 'Accessories',
                     'seller': manu_id
@@ -172,18 +196,26 @@ def seed_data():
                         title,
                         description,
                         image_url,
-                        price,
+                        original_price,
+                        sell_price,
+                        allow_purchase,
+                        allow_lease,
+                        lease_price_per_month,
                         status,
                         seller_id,
                         category_id
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id
                 """, (
                     item['title'],
                     item['description'],
                     item['image_url'],
-                    item['price'],
+                    item['original_price'],
+                    item['sell_price'],
+                    item['allow_purchase'],
+                    item['allow_lease'],
+                    item['lease_price_per_month'],
                     item['status'],
                     item['seller'],
                     categories[item['category']]
@@ -209,8 +241,8 @@ def seed_data():
 
             # 2. EXPIRED reservation (Mechanical Keyboard)
             cur.execute("""
-                INSERT INTO reservations (item_id, buyer_id, status, expires_at, created_at)
-                VALUES (%s, %s, 'expired', %s, %s)
+                INSERT INTO reservations (item_id, buyer_id, transaction_type, lease_amount, status, expires_at, created_at)
+                VALUES (%s, %s, 'purchase', NULL, 'completed', %s, %s)
             """, (
                 created_items['Mechanical Keyboard (Red Switches)'],
                 ajay_id,  # Ajay tried to reserve Ritik's keyboard but didn't complete
@@ -221,11 +253,12 @@ def seed_data():
 
             # 3. CANCELLED reservation (Laptop Backpack)
             cur.execute("""
-                INSERT INTO reservations (item_id, buyer_id, status, expires_at, created_at)
-                VALUES (%s, %s, 'cancelled', %s, %s)
+                INSERT INTO reservations (item_id, buyer_id, transaction_type, lease_amount, status, expires_at, created_at)
+                VALUES (%s, %s, 'lease', %s, 'cancelled', %s, %s)
             """, (
                 created_items['Laptop Backpack (Water Resistant)'],
                 ajay_id,  # Ajay cancelled his reservation on Manu's backpack
+                1.25,
                 now + timedelta(hours=20),  # Would have expired later
                 now - timedelta(days=1)     # Created yesterday
             ))
@@ -233,8 +266,8 @@ def seed_data():
 
             # 4. ACTIVE reservation (HP Laptop) - for testing Confirm Sale
             cur.execute("""
-                INSERT INTO reservations (item_id, buyer_id, status, expires_at, created_at)
-                VALUES (%s, %s, 'active', %s, %s)
+                INSERT INTO reservations (item_id, buyer_id, transaction_type, lease_amount, status, expires_at, created_at)
+                VALUES (%s, %s, 'purchase', NULL, 'active', %s, %s)
             """, (
                 created_items['HP Pavilion 15 Laptop'],
                 manu_id,  # Manu is reserving Ajay's laptop

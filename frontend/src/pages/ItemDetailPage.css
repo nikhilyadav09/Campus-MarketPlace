@@ -73,6 +73,11 @@
     font-weight: 600;
 }
 
+.deal-amount-note {
+    margin: -8px 0 var(--spacing-lg) 0;
+    color: #7c2d12;
+    font-weight: 600;
+}
 .item-detail-section {
     margin-bottom: var(--spacing-lg);
 }

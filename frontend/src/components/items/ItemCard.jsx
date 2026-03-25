@@ -155,9 +155,7 @@ function ItemCard({ item, currentUser, onStatusClick }) {
                 {/* Price & Seller Footer */}
                 <div className="item-card-footer">
                     <span className="item-price">
-                        {item.allow_lease && !item.allow_purchase
-                            ? `Lease ₹${((Number(item.price) * Number(item.lease_percentage || 0)) / 100).toFixed(0)}`
-                            : formatPrice(item.price)}
+                        Sell {formatPrice(item.price)}
                     </span>
                     <span className="item-seller">
                         {item.seller_name ? (
@@ -167,6 +165,16 @@ function ItemCard({ item, currentUser, onStatusClick }) {
                         )}
                     </span>
                 </div>
+                {item.allow_lease && (
+                    <div className="item-lease-price">
+                        Lease ₹{((Number(item.price) * Number(item.lease_percentage || 0)) / 100).toFixed(2)}
+                    </div>
+                )}
+                {isOwner && item.status === ITEM_STATUS.SOLD && item.deal_amount && (
+                    <div className="item-deal-amount">
+                        Closed at ₹{Number(item.deal_amount).toFixed(2)} ({item.transaction_type === 'lease' ? 'lease' : 'sale'})
+                    </div>
+                )}
             </div>
         </div>
     );

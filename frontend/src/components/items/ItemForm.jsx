@@ -9,6 +9,7 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
     const [formData, setFormData] = useState({
         title: initialData?.title || '',
         description: initialData?.description || '',
+        image_url: initialData?.image_url || '',
         price: initialData?.price || '',
         category_id: initialData?.category_id || '',
         allow_purchase: initialData?.allow_purchase ?? true,
@@ -28,6 +29,9 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
         }
         if (!formData.category_id) {
             newErrors.category_id = 'Category is required';
+        }
+        if (!formData.description.trim() || formData.description.trim().length < 20) {
+            newErrors.description = 'Add at least 20 characters describing condition, specs, and usage';
         }
         if (!formData.allow_purchase && !formData.allow_lease) {
             newErrors.listing_mode = 'Enable at least one option: Buy or Lease';
@@ -78,6 +82,33 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
                 />
                 {errors.title && <span className="error-message">{errors.title}</span>}
             </div>
+            <div className="form-group">
+                <label htmlFor="description">Description</label>
+                <textarea
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    placeholder="Describe your item..."
+                    rows={4}
+                    className={errors.description ? 'error' : ''}
+                />
+                {errors.description && <span className="error-message">{errors.description}</span>}
+            </div>
+
+            <div className="form-group">
+                <label htmlFor="image_url">Product Image URL (optional)</label>
+                <input
+                    type="url"
+                    id="image_url"
+                    name="image_url"
+                    value={formData.image_url}
+                    onChange={handleChange}
+                    placeholder="https://example.com/item-photo.jpg"
+                />
+            </div>
+
+            <div className="form-row"></div>
 
             <div className="form-group">
                 <label>Listing type *</label>
@@ -122,6 +153,18 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
                     {errors.lease_percentage && <span className="error-message">{errors.lease_percentage}</span>}
                 </div>
             )}
+            <div className="price-preview-card">
+                <h4>Price Summary</h4>
+                {formData.allow_purchase && (
+                    <p><strong>Sell price:</strong> ₹{Number(formData.price || 0).toFixed(2)}</p>
+                )}
+                {formData.allow_lease && (
+                    <p>
+                        <strong>Lease amount:</strong> ₹{((Number(formData.price || 0) * Number(formData.lease_percentage || 0)) / 100).toFixed(2)}
+                    </p>
+                )}
+            </div>
+
 
             <div className="form-actions">
                 <Button type="submit" variant="primary" size="large" loading={loading}>

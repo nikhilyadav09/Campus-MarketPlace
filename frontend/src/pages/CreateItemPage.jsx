@@ -35,6 +35,10 @@ function CreateItemPage({ currentUser }) {
     if (!currentUser) {
         return (
             <div className="create-item-page">
+            <header className="page-header">
+                <h1 className="page-title">Create a complete listing</h1>
+                <p className="page-subtitle">Add product details, sell price, and optional lease terms so buyers can choose confidently.</p>
+            </header>
                 <div className="page-message">
                     Select a user to create a listing.
                 </div>

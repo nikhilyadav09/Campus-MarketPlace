@@ -16,10 +16,10 @@ def list_reservations(buyer_id=None, status=None):
             r.expires_at,
             r.created_at,
             i.title as item_title,
-            i.price as item_price,
+            i.sell_price as item_price,
             i.allow_purchase,
             i.allow_lease,
-            i.lease_percentage,
+            i.lease_price_per_month,
             i.status as item_status,
             i.image_url as item_image_url,
             i.seller_id,
@@ -70,7 +70,7 @@ def reserve_item(item_id, buyer_id, transaction_type='purchase', duration_hours=
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT seller_id, status, price, allow_purchase, allow_lease, lease_percentage
+                SELECT seller_id, status, sell_price, allow_purchase, allow_lease, lease_price_per_month
                 FROM items
                 WHERE id = %s
                 FOR UPDATE
@@ -97,7 +97,7 @@ def reserve_item(item_id, buyer_id, transaction_type='purchase', duration_hours=
 
             lease_amount = None
             if transaction_type == 'lease':
-                lease_amount = round(float(item['price']) * float(item['lease_percentage']) / 100, 2)
+                lease_amount = round(float(item['lease_price_per_month']), 2)
 
             cur.execute(
                 """

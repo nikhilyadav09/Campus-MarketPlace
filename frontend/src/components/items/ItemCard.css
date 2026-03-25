@@ -223,6 +223,20 @@
     border-radius: 6px;
 }
 
+.item-lease-price {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: #0f766e;
+    font-weight: 700;
+}
+
+.item-deal-amount {
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: #7c2d12;
+    font-weight: 600;
+}
+
 /* Hover state for price */
 .item-card:hover .item-price {
     background: linear-gradient(135deg, #059669 0%, #047857 100%);

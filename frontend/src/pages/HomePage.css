@@ -6,6 +6,26 @@
     gap: var(--spacing-3xl);
     padding-bottom: var(--spacing-3xl);
 }
+.lease-highlight {
+    padding: 0 var(--spacing-xl);
+}
+
+.lease-highlight-card {
+    background: linear-gradient(135deg, #f0f9ff 0%, #eef2ff 100%);
+    border: 1px solid #bfdbfe;
+    border-radius: var(--radius-xl);
+    padding: 20px 24px;
+}
+
+.lease-highlight-card h3 {
+    margin: 0 0 8px 0;
+    color: #1e3a8a;
+}
+
+.lease-highlight-card p {
+    margin: 0;
+    color: #334155;
+}
 
 /* ============================================
    HERO SECTION

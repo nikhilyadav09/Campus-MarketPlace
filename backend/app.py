@@ -37,6 +37,14 @@ CORS(app, supports_credentials=True)
 
 init_db_pool(app)
 
+def parse_bool(value, default=False):
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in ('true', '1', 'yes', 'y', 'on')
+    return bool(value)
 
 def build_frontend_error_redirect(message):
     frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:5173').rstrip('/')
@@ -121,37 +129,56 @@ def items_endpoint():
     if not data:
         return jsonify({'error': 'No data provided'}), 400
 
-    required = ['category_id', 'title', 'price']
+    required = ['category_id', 'title', 'original_price', 'sell_price']
     missing = [field for field in required if field not in data]
     if missing:
         return jsonify({'error': f"Missing fields: {', '.join(missing)}"}), 400
 
-    allow_purchase = bool(data.get('allow_purchase', True))
-    allow_lease = bool(data.get('allow_lease', False))
-    lease_percentage = data.get('lease_percentage', 10)
+    allow_purchase = parse_bool(data.get('allow_purchase', True), default=True)
+    allow_lease = parse_bool(data.get('allow_lease', False), default=False)
 
     if not allow_purchase and not allow_lease:
         return jsonify({'error': 'Enable at least one option: buy or lease'}), 400
 
     try:
-        lease_percentage = float(lease_percentage)
+        original_price = float(data['original_price'])
+        sell_price = float(data['sell_price'])
     except (TypeError, ValueError):
-        return jsonify({'error': 'lease_percentage must be a number'}), 400
+        return jsonify({'error': 'original_price and sell_price must be numbers'}), 400
 
-    if lease_percentage < 4 or lease_percentage > 10:
-        return jsonify({'error': 'lease_percentage must be between 4 and 10'}), 400
+    if original_price <= 0:
+        return jsonify({'error': 'Original price must be greater than 0'}), 400
+
+    min_sell = original_price * 0.30
+    max_sell = original_price * 0.50
+    if sell_price < min_sell or sell_price > max_sell:
+        return jsonify({'error': f'Sell price must be between ₹{min_sell:.0f} and ₹{max_sell:.0f} (30-50% of original price)'}), 400
+
+    lease_price_per_month = None
+    if allow_lease:
+        if 'lease_price_per_month' not in data or data['lease_price_per_month'] is None:
+            return jsonify({'error': 'Lease price per month is required when leasing is enabled'}), 400
+        try:
+            lease_price_per_month = float(data['lease_price_per_month'])
+        except (TypeError, ValueError):
+            return jsonify({'error': 'lease_price_per_month must be a number'}), 400
+        min_lease = original_price * 0.03
+        max_lease = original_price * 0.08
+        if lease_price_per_month < min_lease or lease_price_per_month > max_lease:
+            return jsonify({'error': f'Lease price must be between ₹{min_lease:.0f} and ₹{max_lease:.0f}/month (3-8% of original price)'}), 400
 
     try:
         item = create_item(
             seller_id=current_user['id'],
             category_id=data['category_id'],
             title=data['title'],
-            price=data['price'],
+            original_price=original_price,
+            sell_price=sell_price,
             description=data.get('description'),
             image_url=data.get('image_url'),
             allow_purchase=allow_purchase,
             allow_lease=allow_lease,
-            lease_percentage=lease_percentage,
+            lease_price_per_month=lease_price_per_month,
         )
         return jsonify(item), 201
     except Exception as exc:

@@ -168,10 +168,15 @@ function ItemDetailPage({ currentUser }) {
 
                 <h1 className="item-detail-title">{item.title}</h1>
 
-                <div className="item-detail-price">{formatPrice(item.price)}</div>
+                <div className="item-detail-price">Sell: {formatPrice(item.price)}</div>
                 {item.allow_lease && (
                     <p className="lease-price-note">
                         Lease now for {formatPrice(getLeaseAmount())} ({Number(item.lease_percentage).toFixed(1)}% of total price)
+                    </p>
+                )}
+                {item.status === ITEM_STATUS.SOLD && item.deal_amount && (
+                    <p className="deal-amount-note">
+                        Final {item.transaction_type === 'lease' ? 'lease' : 'sale'} amount: {formatPrice(item.deal_amount)}
                     </p>
                 )}
 
@@ -307,7 +312,7 @@ function ItemDetailPage({ currentUser }) {
                             {actionState.action === 'confirm-sale' && (
                                 <div className="action-group">
                                     <Button variant="success" size="large" onClick={handleMarkSold} loading={actionLoading}>
-                                        Confirm Sale
+                                        Confirm Transaction
                                     </Button>
                                     <Button variant="danger" size="large" onClick={handleCancel} loading={actionLoading}>
                                         Cancel Reservation

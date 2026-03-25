@@ -12,7 +12,7 @@ function HomePage({ categories: propCategories }) {
     const [featuredItems, setFeaturedItems] = useState([]);
     const [categories, setCategories] = useState(propCategories || []);
     const [loading, setLoading] = useState(true);
-
+    const [marketStats, setMarketStats] = useState({ buyOnly: 0, leaseOnly: 0, hybrid: 0 });
     useEffect(() => {
         // Use passed categories if available, otherwise fetch
         const categoriesPromise = propCategories ? Promise.resolve(propCategories) : getCategories();
@@ -23,6 +23,13 @@ function HomePage({ categories: propCategories }) {
         ]).then(([items, cats]) => {
             setFeaturedItems(items);
             setCategories(cats.filter(c => c.name !== 'Other').slice(0, 6));
+            const stats = items.reduce((acc, item) => {
+                if (item.allow_purchase && item.allow_lease) acc.hybrid += 1;
+                else if (item.allow_purchase) acc.buyOnly += 1;
+                else if (item.allow_lease) acc.leaseOnly += 1;
+                return acc;
+            }, { buyOnly: 0, leaseOnly: 0, hybrid: 0 });
+            setMarketStats(stats);
             setLoading(false);
         }).catch(() => setLoading(false));
     }, [propCategories]);
@@ -79,8 +86,8 @@ function HomePage({ categories: propCategories }) {
                         <span className="gradient-text">Your Campus</span>
                     </h1>
                     <p className="hero-subtitle">
-                        The trusted marketplace for students. Find textbooks, electronics,
-                        furniture and more from fellow students at great prices.
+                        The trusted marketplace for students. Buy, sell, or lease items like laptops,
+                        books, furniture and more from fellow students at campus-friendly prices.
                     </p>
                     <div className="hero-actions">
                         <Link to="/items" className="btn-primary">
@@ -95,18 +102,18 @@ function HomePage({ categories: propCategories }) {
                     </div>
                     <div className="hero-stats">
                         <div className="stat">
-                            <span className="stat-number">100+</span>
-                            <span className="stat-label">Active Listings</span>
+                            <span className="stat-number">{marketStats.buyOnly + marketStats.hybrid}</span>
+                            <span className="stat-label">Buy Listings</span>
                         </div>
                         <div className="stat-divider"></div>
                         <div className="stat">
-                            <span className="stat-number">50+</span>
-                            <span className="stat-label">Happy Students</span>
+                            <span className="stat-number">{marketStats.leaseOnly + marketStats.hybrid}</span>
+                            <span className="stat-label">Lease Listings</span>
                         </div>
                         <div className="stat-divider"></div>
                         <div className="stat">
-                            <span className="stat-number">30 Minute</span>
-                            <span className="stat-label">Reservation Hold</span>
+                            <span className="stat-number">4% - 10%</span>
+                            <span className="stat-label">Lease Range</span>
                         </div>
                     </div>
                 </div>
@@ -135,6 +142,15 @@ function HomePage({ categories: propCategories }) {
                         <span className="hero-card-emoji">🎒</span>
                         <span>Accessories</span>
                     </Link>
+                </div>
+            </section>
+            <section className="lease-highlight">
+                <div className="lease-highlight-card">
+                    <h3>🛒 Buy or 🤝 Lease — your choice</h3>
+                    <p>
+                        Sellers can enable both options and set lease pricing between <strong>4%</strong> and <strong>10%</strong> of sell price.
+                        Buyers can switch mode from item details before reserving.
+                    </p>
                 </div>
             </section>
 

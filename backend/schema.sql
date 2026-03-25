@@ -54,10 +54,11 @@ CREATE TABLE items (
     title VARCHAR(200) NOT NULL,
     description TEXT,
     image_url VARCHAR(500),
-    price NUMERIC(10, 2) NOT NULL,
+    original_price NUMERIC(10, 2) NOT NULL,
+    sell_price NUMERIC(10, 2) NOT NULL,
+    lease_price_per_month NUMERIC(10, 2),
     allow_purchase BOOLEAN NOT NULL DEFAULT TRUE,
     allow_lease BOOLEAN NOT NULL DEFAULT FALSE,
-    lease_percentage NUMERIC(5, 2) NOT NULL DEFAULT 10.00,
     status VARCHAR(20) NOT NULL DEFAULT 'available',
     seller_id UUID NOT NULL,
     category_id UUID NOT NULL,
@@ -65,12 +66,18 @@ CREATE TABLE items (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     
     -- Constraints
-    CONSTRAINT chk_items_price_non_negative 
-        CHECK (price >= 0),
+    CONSTRAINT chk_items_original_price_positive
+        CHECK (original_price > 0),
+    CONSTRAINT chk_items_sell_price_valid
+        CHECK (sell_price >= original_price * 0.30 AND sell_price <= original_price * 0.50),
     CONSTRAINT chk_items_listing_mode_valid
         CHECK (allow_purchase OR allow_lease),
-    CONSTRAINT chk_items_lease_percentage_valid
-        CHECK (lease_percentage >= 4.00 AND lease_percentage <= 10.00),
+    CONSTRAINT chk_items_lease_price_valid
+        CHECK (
+            (allow_lease = FALSE AND lease_price_per_month IS NULL)
+            OR (allow_lease = TRUE AND lease_price_per_month >= original_price * 0.03
+                AND lease_price_per_month <= original_price * 0.08)
+        ),
     CONSTRAINT chk_items_status_valid 
         CHECK (status IN ('available', 'reserved', 'sold')),
     
