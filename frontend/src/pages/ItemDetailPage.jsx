@@ -66,9 +66,8 @@ function ItemDetailPage({ currentUser }) {
         }).format(price);
     };
     const getLeaseAmount = () => {
-        if (!item?.allow_lease) return null;
-        const leasePercentage = Number(item.lease_percentage || 0);
-        return (Number(item.price) * leasePercentage) / 100;
+        if (!item?.allow_lease || !item?.lease_price_per_month) return null;
+        return Number(item.lease_price_per_month);
     };
 
 
@@ -168,10 +167,10 @@ function ItemDetailPage({ currentUser }) {
 
                 <h1 className="item-detail-title">{item.title}</h1>
 
-                <div className="item-detail-price">Sell: {formatPrice(item.price)}</div>
-                {item.allow_lease && (
+                <div className="item-detail-price">Sell: {formatPrice(item.sell_price)}</div>
+                {item.allow_lease && item.lease_price_per_month && (
                     <p className="lease-price-note">
-                        Lease now for {formatPrice(getLeaseAmount())} ({Number(item.lease_percentage).toFixed(1)}% of total price)
+                        Lease now for {formatPrice(getLeaseAmount())}/month
                     </p>
                 )}
                 {item.status === ITEM_STATUS.SOLD && item.deal_amount && (

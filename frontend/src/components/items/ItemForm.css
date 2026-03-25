@@ -151,6 +151,74 @@
     color: var(--text-muted);
 }
 
+/* ── Slider / Range Input Styling ── */
+.slider-group {
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+}
+
+.slider-value {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: var(--font-size-base);
+}
+
+.slider-range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.price-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #bae6fd 0%, #3b82f6 100%);
+    outline: none;
+    cursor: pointer;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+}
+
+.price-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #3b82f6;
+    border: 3px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+    cursor: pointer;
+    transition: transform 0.15s;
+}
+
+.price-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+}
+
+.price-slider::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #3b82f6;
+    border: 3px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+    cursor: pointer;
+}
+
+.text-muted {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
 @media (max-width: 600px) {
     .form-row {
         grid-template-columns: 1fr;

@@ -1,6 +1,4 @@
-// ItemListPage - PRIMARY SCREEN: Browse Items
-// Items visible immediately above the fold
-// Status badges on cards are clickable to filter
+// MyItemsPage - SCREEN: Manage user's own listings
 
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -27,19 +25,19 @@ const SORT_OPTIONS = [
 const VALID_STATUSES = new Set(STATUS_OPTIONS.map(option => option.value));
 const VALID_SORTS = new Set(SORT_OPTIONS.map(option => option.value));
 
-function ItemListPage({ currentUser, categories = [], categoriesLoading = false }) {
+function MyItemsPage({ currentUser, categories = [], categoriesLoading = false }) {
     const [searchParams, setSearchParams] = useSearchParams();
     const selectedCategory = searchParams.get('category') || null;
     const statusFilter = VALID_STATUSES.has(searchParams.get('status'))
         ? searchParams.get('status')
-        : ITEM_STATUS.AVAILABLE;
+        : 'all';
     const searchQuery = searchParams.get('q') || '';
     const sortBy = VALID_SORTS.has(searchParams.get('sort')) ? searchParams.get('sort') : 'newest';
 
     const filters = {
         ...(selectedCategory && { category_id: selectedCategory }),
         ...(statusFilter !== 'all' && { status: statusFilter }),
-        ...(currentUser && { exclude_seller_id: currentUser.id })
+        ...(currentUser && { seller_id: currentUser.id })
     };
 
     const { items, loading, error } = useItems(filters);
@@ -111,8 +109,8 @@ function ItemListPage({ currentUser, categories = [], categoriesLoading = false 
         const sortedItems = [...searchedItems];
 
         sortedItems.sort((a, b) => {
-            if (sortBy === 'price_asc') return Number(a.price) - Number(b.price);
-            if (sortBy === 'price_desc') return Number(b.price) - Number(a.price);
+            if (sortBy === 'price_asc') return Number(a.sell_price) - Number(b.sell_price);
+            if (sortBy === 'price_desc') return Number(b.sell_price) - Number(a.sell_price);
             if (sortBy === 'title_asc') return (a.title || '').localeCompare(b.title || '');
 
             const aDate = new Date(a.created_at || 0).getTime();
@@ -191,7 +189,7 @@ function ItemListPage({ currentUser, categories = [], categoriesLoading = false 
                 items={visibleItems}
                 loading={loading}
                 error={error}
-                emptyMessage="No items match your current filters"
+                emptyMessage={statusFilter === 'all' ? "You haven't listed any items yet." : "No items match your current filters"}
                 currentUser={currentUser}
                 onStatusClick={handleStatusClick}
             />
@@ -199,4 +197,4 @@ function ItemListPage({ currentUser, categories = [], categoriesLoading = false 
     );
 }
 
-export default ItemListPage;
+export default MyItemsPage;

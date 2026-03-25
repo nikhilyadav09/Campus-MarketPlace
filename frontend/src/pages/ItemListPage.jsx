@@ -111,8 +111,8 @@ function ItemListPage({ currentUser, categories = [], categoriesLoading = false 
         const sortedItems = [...searchedItems];
 
         sortedItems.sort((a, b) => {
-            if (sortBy === 'price_asc') return Number(a.price) - Number(b.price);
-            if (sortBy === 'price_desc') return Number(b.price) - Number(a.price);
+            if (sortBy === 'price_asc') return Number(a.sell_price) - Number(b.sell_price);
+            if (sortBy === 'price_desc') return Number(b.sell_price) - Number(a.sell_price);
             if (sortBy === 'title_asc') return (a.title || '').localeCompare(b.title || '');
 
             const aDate = new Date(a.created_at || 0).getTime();
