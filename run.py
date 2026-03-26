@@ -5,6 +5,7 @@ import time
 import platform
 import shutil
 import signal
+from pathlib import Path
 from threading import Thread
 
 # =============================================================================
@@ -13,6 +14,8 @@ from threading import Thread
 BACKEND_DIR = os.path.join(os.getcwd(), 'backend')
 FRONTEND_DIR = os.path.join(os.getcwd(), 'frontend')
 VENV_DIR = os.path.join(BACKEND_DIR, 'venv')
+SEED_MARKER_PATH = os.path.join(BACKEND_DIR, '.db_seeded')
+DEFAULT_DATABASE_URL = "postgresql://postgres:Ajay%40123@localhost:5432/campus_marketplace"
 
 # Colors for terminal output
 class Colors:
@@ -159,17 +162,6 @@ def install_dependencies():
         error("Failed to install dependencies.")
         sys.exit(1)
 
-def run_seed():
-    """Run database seed script."""
-    log("Initializing database (seeding)...", Colors.CYAN)
-    python_cmd = get_python_cmd()
-    try:
-        subprocess.check_call([python_cmd, "seed.py"], cwd=BACKEND_DIR)
-        log("Database initialized.", Colors.GREEN)
-    except subprocess.CalledProcessError:
-        error("Failed to seed database. Check if PostgreSQL is running.")
-        # We don't exit here, as it might just be already seeded or minor error, let backend try to start
-        
 def install_frontend_dependencies():
     """Install frontend dependencies if node_modules is missing."""
     node_modules_path = os.path.join(FRONTEND_DIR, 'node_modules')
@@ -187,6 +179,67 @@ def install_frontend_dependencies():
             sys.exit(1)
     else:
         log("Frontend dependencies already installed.", Colors.CYAN)
+
+# =============================================================================
+# DATABASE SEEDING HELPERS
+# =============================================================================
+def needs_database_seed():
+    """Check whether the database needs to be (re)seeded."""
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except ImportError:
+        # dotenv isn't critical here; continue without it
+        pass
+
+    try:
+        import psycopg
+    except ImportError:
+        log("psycopg not available yet; assuming database seed is required.", Colors.WARNING)
+        return True
+
+    db_url = os.environ.get("DATABASE_URL", DEFAULT_DATABASE_URL)
+
+    try:
+        with psycopg.connect(db_url, connect_timeout=3) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT to_regclass('public.users')")
+                users_table_exists = cur.fetchone()[0] is not None
+                if not users_table_exists:
+                    return True
+
+                cur.execute("SELECT COUNT(*) FROM users")
+                return cur.fetchone()[0] == 0
+    except Exception as exc:
+        log(f"Could not inspect database state ({exc}). Seeding will run to ensure schema exists.", Colors.WARNING)
+        return True
+
+
+def run_seed(force=False):
+    """Run database seed script once unless forced."""
+    marker_path = Path(SEED_MARKER_PATH)
+
+    if force:
+        log("FORCE_DB_SEED=true detected - database will be reseeded.", Colors.WARNING)
+        if marker_path.exists():
+            marker_path.unlink()
+    else:
+        if marker_path.exists():
+            log("Database already seeded; skipping automatic seeding (remove backend/.db_seeded or set FORCE_DB_SEED=true to reseed).", Colors.CYAN)
+            return
+        if not needs_database_seed():
+            log("Existing data detected; skipping automatic seeding.", Colors.CYAN)
+            marker_path.touch()
+            return
+
+    log("Initializing database (seeding)...", Colors.CYAN)
+    python_cmd = get_python_cmd()
+    try:
+        subprocess.check_call([python_cmd, "seed.py"], cwd=BACKEND_DIR)
+        log("Database initialized.", Colors.GREEN)
+        marker_path.touch()
+    except subprocess.CalledProcessError:
+        error("Failed to seed database. Check if PostgreSQL is running.")
 
 # =============================================================================
 # MAIN
@@ -217,8 +270,9 @@ def main():
     # Install Frontend Dependencies
     install_frontend_dependencies()
     
-    # 3. Seed Database
-    run_seed()
+    # 3. Seed Database (only if needed)
+    force_seed = os.environ.get('FORCE_DB_SEED', 'false').lower() == 'true'
+    run_seed(force=force_seed)
 
     # 4. Start Processes
     try:

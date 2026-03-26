@@ -157,7 +157,7 @@ function ItemDetailPage({ currentUser }) {
 
     return (
         <div className="item-detail-page">
-            <Link to="/items" className="back-link">← Back to items</Link>
+            <Link to="/my-items" className="back-link">← Back to items</Link>
 
             <div className="item-detail-card">
                 <div className="item-detail-header">

@@ -1,14 +1,6 @@
-// Base API client configuration
-import { fetchMockAPI } from './mockApi';
-
 const API_BASE_URL = 'http://localhost:8000';
-const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true';
 
 async function fetchAPI(endpoint, options = {}) {
-    if (USE_MOCK_DATA) {
-        return fetchMockAPI(endpoint, options);
-    }
-
     const url = `${API_BASE_URL}${endpoint}`;
 
     const defaultHeaders = {

@@ -19,6 +19,7 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
     });
 
     const [errors, setErrors] = useState({});
+    const [uploadingImage, setUploadingImage] = useState(false);
 
     // Computed price ranges based on original_price
     const priceRanges = useMemo(() => {
@@ -98,6 +99,43 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
         }
     };
 
+    const handleImageUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploadingImage(true);
+        const data = new FormData();
+        data.append("file", file);
+        
+        // Use environment variables for Cloudinary configuration
+        const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "campus_marketplace"; 
+        const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "demo";
+        
+        data.append("upload_preset", uploadPreset);
+        
+        try {
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+                method: "POST",
+                body: data
+            });
+            
+            if (!res.ok) {
+                throw new Error(`Upload failed: ${res.statusText}`);
+            }
+            
+            const uploadedImage = await res.json();
+            
+            if (uploadedImage.secure_url) {
+                setFormData(prev => ({ ...prev, image_url: uploadedImage.secure_url }));
+            }
+        } catch (error) {
+            console.error("Upload failed:", error);
+            alert("Failed to upload image. Please check your Cloudinary configuration or try again.");
+        } finally {
+            setUploadingImage(false);
+        }
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         if (validate()) {
@@ -140,15 +178,50 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
             </div>
 
             <div className="form-group">
-                <label htmlFor="image_url">Product Image URL (optional)</label>
-                <input
-                    type="url"
-                    id="image_url"
-                    name="image_url"
-                    value={formData.image_url}
-                    onChange={handleChange}
-                    placeholder="https://example.com/item-photo.jpg"
-                />
+                <label>Product Image (optional)</label>
+                
+                {formData.image_url ? (
+                    <div className="image-preview-container" style={{ marginBottom: '10px' }}>
+                        <img 
+                            src={formData.image_url} 
+                            alt="Product Preview" 
+                            style={{ width: '120px', height: '120px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #ddd', display: 'block', marginBottom: '8px' }} 
+                        />
+                        <Button 
+                            type="button" 
+                            variant="secondary" 
+                            size="small"
+                            onClick={() => setFormData(prev => ({ ...prev, image_url: '' }))}
+                        >
+                            Remove Image
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="file-upload-container">
+                        <input
+                            type="file"
+                            id="image_upload"
+                            accept="image/*"
+                            capture="environment"
+                            onChange={handleImageUpload}
+                            disabled={uploadingImage}
+                            className={`file-input ${uploadingImage ? 'disabled' : ''}`}
+                            style={{ 
+                                padding: '10px', 
+                                border: '1px dashed #ccc', 
+                                borderRadius: '8px', 
+                                width: '100%', 
+                                cursor: uploadingImage ? 'not-allowed' : 'pointer',
+                                opacity: uploadingImage ? 0.6 : 1
+                            }}
+                        />
+                        {uploadingImage && <div className="uploading-text" style={{ marginTop: '8px', color: '#666', fontSize: '14px' }}>Uploading to Cloudinary...</div>}
+                    </div>
+                )}
+                
+                <small className="form-helper">
+                    Take a photo or upload from your device.
+                </small>
             </div>
 
             <div className="form-row">

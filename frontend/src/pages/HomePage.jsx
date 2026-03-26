@@ -52,10 +52,10 @@ function HomePage({ categories: propCategories }) {
     if (loading) {
         return (
             <div className="home-page">
-                <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'center', 
-                    alignItems: 'center', 
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
                     minHeight: '60vh',
                     fontSize: '1.2rem',
                     color: '#666'
@@ -82,7 +82,7 @@ function HomePage({ categories: propCategories }) {
                 <div className="hero-overlay"></div>
                 <div className="hero-content">
                     <h1 className="hero-title">
-                        Buy & Sell Within<br />
+                        Buy, Sell & Lease Within<br />
                         <span className="gradient-text">Your Campus</span>
                     </h1>
                     <p className="hero-subtitle">
@@ -102,18 +102,18 @@ function HomePage({ categories: propCategories }) {
                     </div>
                     <div className="hero-stats">
                         <div className="stat">
-                            <span className="stat-number">{marketStats.buyOnly + marketStats.hybrid}</span>
-                            <span className="stat-label">Buy Listings</span>
+                            <span className="stat-number">500+</span>
+                            <span className="stat-label">Products Added</span>
                         </div>
                         <div className="stat-divider"></div>
                         <div className="stat">
-                            <span className="stat-number">{marketStats.leaseOnly + marketStats.hybrid}</span>
-                            <span className="stat-label">Lease Listings</span>
+                            <span className="stat-number">800+</span>
+                            <span className="stat-label">Students Connected</span>
                         </div>
                         <div className="stat-divider"></div>
                         <div className="stat">
-                            <span className="stat-number">4% - 10%</span>
-                            <span className="stat-label">Lease Range</span>
+                            <span className="stat-number">100+</span>
+                            <span className="stat-label">Successful Trades</span>
                         </div>
                     </div>
                 </div>
@@ -142,15 +142,6 @@ function HomePage({ categories: propCategories }) {
                         <span className="hero-card-emoji">🎒</span>
                         <span>Accessories</span>
                     </Link>
-                </div>
-            </section>
-            <section className="lease-highlight">
-                <div className="lease-highlight-card">
-                    <h3>🛒 Buy or 🤝 Lease — your choice</h3>
-                    <p>
-                        Sellers can enable both options and set lease pricing between <strong>4%</strong> and <strong>10%</strong> of sell price.
-                        Buyers can switch mode from item details before reserving.
-                    </p>
                 </div>
             </section>
 
