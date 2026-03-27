@@ -221,18 +221,28 @@ def mark_item_sold_endpoint(current_user, item_id):
             if item['status'] == 'sold':
                 return jsonify({'error': 'Item already sold'}), 400
 
-            cur.execute("UPDATE items SET status = 'sold', updated_at = NOW() WHERE id = %s", (item_id,))
+            cur.execute("UPDATE items SET status = 'sold', updated_at = NOW() WHERE id = %s AND status = 'reserved'", (item_id,))
+            item_updated = cur.rowcount
+
             cur.execute(
                 """
                 UPDATE reservations
                 SET status = 'completed'
                 WHERE item_id = %s AND status = 'active'
+                RETURNING id
                 """,
                 (item_id,),
             )
+            reservation_updated = cur.fetchone()
+
+            if not reservation_updated:
+                # If no active reservation was found, we shouldn't have marked it as sold
+                # unless we want to support manual "sold" without reservation (which we don't yet)
+                conn.rollback()
+                return jsonify({'error': 'No active reservation found for this item. Only reserved items can be confirmed as sold.'}), 400
 
             conn.commit()
-            return jsonify({'status': 'sold', 'item_id': item_id}), 200
+            return jsonify({'status': 'sold', 'item_id': item_id, 'reservation_id': reservation_updated['id']}), 200
     except Exception as exc:
         conn.rollback()
         return jsonify({'error': str(exc)}), 500

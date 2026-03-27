@@ -171,7 +171,8 @@ function ItemDetailPage({ currentUser }) {
             setReservation(null);
             refetch();
         } catch (err) {
-            setActionError(err.message);
+            setActionError(err.message || 'Failed to mark item as sold');
+            refetch(); // Refetch to update UI state (the reservation might have expired/cancelled)
         } finally {
             setActionLoading(false);
         }
