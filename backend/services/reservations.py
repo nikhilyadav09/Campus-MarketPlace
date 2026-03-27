@@ -1,6 +1,16 @@
+import os
+import razorpay
 from datetime import datetime, timedelta, timezone
 
 from db import get_cursor, get_db
+
+def get_razorpay_client():
+    key_id = os.environ.get('RAZORPAY_KEY_ID')
+    key_secret = os.environ.get('RAZORPAY_KEY_SECRET')
+    if not key_id or not key_secret:
+        return None
+    return razorpay.Client(auth=(key_id, key_secret))
+
 
 
 def list_reservations(buyer_id=None, status=None):
@@ -99,6 +109,28 @@ def reserve_item(item_id, buyer_id, transaction_type='purchase', duration_hours=
             if transaction_type == 'lease':
                 lease_amount = round(float(item['lease_price_per_month']), 2)
 
+            # Calculate amount for Razorpay (in paise)
+            amount_in_inr = lease_amount if transaction_type == 'lease' else round(float(item['sell_price']), 2)
+            amount_in_paise = int(amount_in_inr * 100)
+
+            # Create Razorpay Order
+            razorpay_client = get_razorpay_client()
+            if not razorpay_client:
+                conn.rollback()
+                return {'error': 'Razorpay not configured'}
+            
+            try:
+                order_data = {
+                    'amount': amount_in_paise,
+                    'currency': 'INR',
+                    'receipt': f"rcpt_{str(item_id)[:8]}_{str(buyer_id)[:8]}"
+                }
+                razorpay_order = razorpay_client.order.create(data=order_data)
+                razorpay_order_id = razorpay_order['id']
+            except Exception as e:
+                conn.rollback()
+                return {'error': f'Failed to create payment order: {str(e)}'}
+
             cur.execute(
                 """
                 UPDATE items
@@ -111,11 +143,11 @@ def reserve_item(item_id, buyer_id, transaction_type='purchase', duration_hours=
             try:
                 cur.execute(
                     """
-                    INSERT INTO reservations (item_id, buyer_id, transaction_type, lease_amount, expires_at, status)
-                    VALUES (%s, %s, %s, %s, %s, 'active')
+                    INSERT INTO reservations (item_id, buyer_id, transaction_type, lease_amount, expires_at, status, razorpay_order_id)
+                    VALUES (%s, %s, %s, %s, %s, 'pending_payment', %s)
                     RETURNING id
                     """,
-                    (item_id, buyer_id, transaction_type, lease_amount, expires_at),
+                    (item_id, buyer_id, transaction_type, lease_amount, expires_at, razorpay_order_id),
                 )
             except Exception as exc:
                 conn.rollback()
@@ -125,6 +157,9 @@ def reserve_item(item_id, buyer_id, transaction_type='purchase', duration_hours=
             conn.commit()
             return {
                 'reservation_id': reservation_id,
+                'razorpay_order_id': razorpay_order_id,
+                'amount': amount_in_paise,
+                'currency': 'INR',
                 'expires_at': expires_at,
                 'transaction_type': transaction_type,
                 'lease_amount': lease_amount,
@@ -212,6 +247,65 @@ def cancel_reservation(reservation_id, user_id):
             conn.commit()
             return {'status': 'cancelled', 'item_id': item_id}
 
+    except Exception as exc:
+        conn.rollback()
+        raise exc
+
+def verify_payment(reservation_id, razorpay_payment_id, razorpay_order_id, razorpay_signature, buyer_id):
+    """
+    Verify Razorpay payment signature and mark reservation as active.
+    """
+    razorpay_client = get_razorpay_client()
+    if not razorpay_client:
+        return {'error': 'Razorpay not configured'}
+        
+    try:
+        # Verify signature
+        razorpay_client.utility.verify_payment_signature({
+            'razorpay_order_id': razorpay_order_id,
+            'razorpay_payment_id': razorpay_payment_id,
+            'razorpay_signature': razorpay_signature
+        })
+    except razorpay.errors.SignatureVerificationError:
+        return {'error': 'Invalid payment signature'}
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, status, buyer_id 
+                FROM reservations 
+                WHERE id = %s AND razorpay_order_id = %s
+                FOR UPDATE
+                """,
+                (reservation_id, razorpay_order_id)
+            )
+            reservation = cur.fetchone()
+            
+            if not reservation:
+                conn.rollback()
+                return {'error': 'Reservation not found or order ID mismatch'}
+            
+            if str(reservation['buyer_id']) != str(buyer_id):
+                conn.rollback()
+                return {'error': 'Not authorized'}
+                
+            if reservation['status'] != 'pending_payment':
+                conn.rollback()
+                return {'error': 'Reservation is not pending payment'}
+                
+            # Mark active
+            cur.execute(
+                """
+                UPDATE reservations 
+                SET status = 'active', razorpay_payment_id = %s, razorpay_signature = %s
+                WHERE id = %s
+                """,
+                (razorpay_payment_id, razorpay_signature, reservation_id)
+            )
+            conn.commit()
+            return {'status': 'success'}
     except Exception as exc:
         conn.rollback()
         raise exc

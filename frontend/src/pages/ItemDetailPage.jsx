@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useItem } from '../hooks/useItems';
-import { getReservations, createReservation, cancelReservation } from '../api/reservations';
+import { getReservations, createReservation, cancelReservation, verifyPayment } from '../api/reservations';
 import { markItemSold } from '../api/items';
 import StatusBadge from '../components/common/StatusBadge';
 import Button from '../components/common/Button';
@@ -77,14 +77,56 @@ function ItemDetailPage({ currentUser }) {
         setActionLoading(true);
         setActionError(null);
         try {
-            await createReservation(item.id, transactionType);
-            navigate('/my-reservations');
+            // 1. Create order
+            const orderRes = await createReservation(item.id, transactionType);
+            
+            // 2. Open Razorpay Checkout
+            const options = {
+                key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+                amount: orderRes.amount,
+                currency: orderRes.currency,
+                name: 'Campus MarketPlace',
+                description: `Payment for ${item.title}`,
+                order_id: orderRes.razorpay_order_id,
+                handler: async function (response) {
+                    try {
+                        setActionLoading(true);
+                        // 3. Verify payment 
+                        await verifyPayment(orderRes.reservation_id, {
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_signature: response.razorpay_signature
+                        });
+                        navigate('/my-reservations');
+                    } catch (verifyErr) {
+                        setActionError(verifyErr.message || 'Payment verification failed');
+                        refetch();
+                    } finally {
+                        setActionLoading(false);
+                    }
+                },
+                prefill: {
+                    name: currentUser.name,
+                    email: currentUser.email,
+                    contact: currentUser.mobile_number || ''
+                },
+                theme: {
+                    color: '#4f46e5'
+                }
+            };
+            
+            const rzp = new window.Razorpay(options);
+            
+            rzp.on('payment.failed', function (response){
+                setActionError(`Payment failed: ${response.error.description}`);
+                setActionLoading(false);
+            });
+            
+            rzp.open();
         } catch (err) {
             setActionError(err.message);
-            // Only refetch on error to show current state if something changed
-            refetch();
-        } finally {
             setActionLoading(false);
+            refetch();
         }
     };
 

@@ -27,3 +27,7 @@ export function confirmReservation(reservationId) {
 export function cancelReservation(reservationId) {
     return post(`/reservations/${reservationId}/cancel`, {});
 }
+
+export function verifyPayment(reservationId, paymentData) {
+    return post(`/reservations/${reservationId}/verify-payment`, paymentData);
+}

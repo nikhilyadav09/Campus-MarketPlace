@@ -20,7 +20,7 @@ from services.auth import (
 )
 from services.categories import get_category, list_categories
 from services.items import create_item, get_item, get_recently_listed, list_items
-from services.reservations import cancel_reservation, confirm_reservation, list_reservations, reserve_item
+from services.reservations import cancel_reservation, confirm_reservation, list_reservations, reserve_item, verify_payment
 from services.users import get_user, list_users
 
 load_dotenv()
@@ -306,6 +306,28 @@ def reserve_item_endpoint(current_user, item_id):
     transaction_type = data.get('transaction_type', 'purchase')
     result = reserve_item(item_id, current_user['id'], transaction_type=transaction_type)
     status_code = 201 if 'error' not in result else 409
+    return jsonify(result), status_code
+
+@app.route('/reservations/<reservation_id>/verify-payment', methods=['POST'])
+@login_required
+def verify_payment_endpoint(current_user, reservation_id):
+    data = request.json or {}
+    razorpay_payment_id = data.get('razorpay_payment_id')
+    razorpay_order_id = data.get('razorpay_order_id')
+    razorpay_signature = data.get('razorpay_signature')
+    
+    if not all([razorpay_payment_id, razorpay_order_id, razorpay_signature]):
+        return jsonify({'error': 'Missing Razorpay parameters'}), 400
+        
+    result = verify_payment(
+        reservation_id=reservation_id,
+        razorpay_payment_id=razorpay_payment_id,
+        razorpay_order_id=razorpay_order_id,
+        razorpay_signature=razorpay_signature,
+        buyer_id=current_user['id']
+    )
+    
+    status_code = 200 if 'error' not in result else 400
     return jsonify(result), status_code
 
 @app.route('/reservations/<reservation_id>/confirm', methods=['POST'])

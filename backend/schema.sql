@@ -107,13 +107,16 @@ CREATE TABLE reservations (
     buyer_id UUID NOT NULL,
     transaction_type VARCHAR(20) NOT NULL DEFAULT 'purchase',
     lease_amount NUMERIC(10, 2),
-    status VARCHAR(20) NOT NULL DEFAULT 'active',
+    status VARCHAR(30) NOT NULL DEFAULT 'pending_payment',
+    razorpay_order_id VARCHAR(255),
+    razorpay_payment_id VARCHAR(255),
+    razorpay_signature VARCHAR(255),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     expires_at TIMESTAMPTZ NOT NULL,
     
     -- Constraints
     CONSTRAINT chk_reservations_status_valid 
-        CHECK (status IN ('active', 'completed', 'cancelled', 'expired')),
+        CHECK (status IN ('pending_payment', 'active', 'completed', 'cancelled', 'expired')),
     CONSTRAINT chk_reservations_transaction_type_valid
         CHECK (transaction_type IN ('purchase', 'lease')),
     CONSTRAINT chk_reservations_lease_amount_valid
@@ -140,4 +143,4 @@ CREATE INDEX idx_reservations_expires_at ON reservations(expires_at);
 
 -- Partial index to ensure only ONE active reservation per item
 -- This enforces exclusivity while allowing history (cancelled/expired/completed)
-CREATE UNIQUE INDEX uq_active_reservations_item ON reservations(item_id) WHERE status = 'active';
+CREATE UNIQUE INDEX uq_active_reservations_item ON reservations(item_id) WHERE status IN ('active', 'pending_payment');
