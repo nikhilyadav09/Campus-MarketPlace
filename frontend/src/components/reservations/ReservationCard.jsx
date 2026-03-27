@@ -9,6 +9,8 @@ import './ReservationCard.css';
 
 function ReservationCard({ reservation, onConfirm, onCancel, confirming, cancelling }) {
     const isActive = reservation.status === RESERVATION_STATUS.ACTIVE;
+    const isCancellable = [RESERVATION_STATUS.ACTIVE, RESERVATION_STATUS.PENDING_PAYMENT].includes(reservation.status);
+    const showTimer = [RESERVATION_STATUS.ACTIVE, RESERVATION_STATUS.PENDING_PAYMENT].includes(reservation.status);
     const isCompleted = reservation.status === RESERVATION_STATUS.COMPLETED;
 
     // Use full item details from reservation
@@ -20,7 +22,7 @@ function ReservationCard({ reservation, onConfirm, onCancel, confirming, cancell
     const imageUrl = reservation.item_image_url || 'https://placehold.co/80x80/e2e8f0/64748b?text=No+Image';
 
     return (
-        <div className={`reservation-card ${isActive ? 'reservation-card--active' : 'reservation-card--past'}`}>
+        <div className={`reservation-card ${showTimer ? 'reservation-card--active' : 'reservation-card--past'}`}>
             <img
                 src={imageUrl}
                 alt={itemTitle}
@@ -48,7 +50,7 @@ function ReservationCard({ reservation, onConfirm, onCancel, confirming, cancell
 
                 <div className="reservation-card-status">
                     <StatusBadge status={reservation.status} type="reservation" />
-                    {isActive && <ReservationTimer expiresAt={reservation.expires_at} />}
+                    {showTimer && <ReservationTimer expiresAt={reservation.expires_at} />}
 
                     {/* Show seller contact info when active reservation */}
                     {isActive && reservation.seller_mobile && (
@@ -81,7 +83,7 @@ function ReservationCard({ reservation, onConfirm, onCancel, confirming, cancell
                 </div>
             </div>
 
-            {isActive && (
+            {isCancellable && (
                 <div className="reservation-card-actions">
                     {onConfirm && (
                         <Button

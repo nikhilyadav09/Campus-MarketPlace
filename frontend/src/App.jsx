@@ -14,6 +14,7 @@ import MyItemsPage from './pages/MyItemsPage';
 import MyReservationsPage from './pages/MyReservationsPage';
 import RegisterPage from './pages/RegisterPage';
 import CompleteProfilePage from './pages/CompleteProfilePage';
+import ReservationDetailPage from './pages/ReservationDetailPage';
 import './App.css';
 
 function App() {
@@ -68,6 +69,7 @@ function App() {
                   </ProtectedRoute>
                 )}
               />
+              <Route path="/reservations/:id" element={<ReservationDetailPage />} />
             </Routes>
           )}
         </main>

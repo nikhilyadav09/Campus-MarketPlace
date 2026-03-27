@@ -1,11 +1,12 @@
 // ReservationTimer component - Clear countdown display
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './ReservationTimer.css';
 
-function ReservationTimer({ expiresAt }) {
+function ReservationTimer({ expiresAt, onExpired }) {
     const [timeLeft, setTimeLeft] = useState('');
     const [isExpired, setIsExpired] = useState(false);
+    const hasFiredRef = useRef(false);
 
     useEffect(() => {
         const calculateTimeLeft = () => {
@@ -16,6 +17,10 @@ function ReservationTimer({ expiresAt }) {
             if (difference <= 0) {
                 setIsExpired(true);
                 setTimeLeft('Expired');
+                if (!hasFiredRef.current) {
+                    hasFiredRef.current = true;
+                    if (onExpired) onExpired();
+                }
                 return;
             }
 

@@ -23,6 +23,7 @@ def reset_database():
         conn = get_db()
         with conn.cursor() as cur:
             cur.execute("""
+                DROP TABLE IF EXISTS notifications CASCADE;
                 DROP TABLE IF EXISTS reservations CASCADE;
                 DROP TABLE IF EXISTS items CASCADE;
                 DROP TABLE IF EXISTS categories CASCADE;
@@ -47,7 +48,7 @@ def seed_data():
         conn = get_db()
         with conn.cursor() as cur:
             print("Clearing existing data...")
-            cur.execute("TRUNCATE TABLE reservations, items, categories, users CASCADE;")
+            cur.execute("TRUNCATE TABLE notifications, reservations, items, categories, users CASCADE;")
             conn.commit()
             
            

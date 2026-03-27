@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useItem } from '../hooks/useItems';
-import { getReservations, createReservation, cancelReservation, verifyPayment } from '../api/reservations';
-import { markItemSold } from '../api/items';
+import { getReservations, createReservation, cancelReservation, verifyPayment, confirmReservation } from '../api/reservations';
+import { getPaymentConfig } from '../api/payments';
 import StatusBadge from '../components/common/StatusBadge';
 import Button from '../components/common/Button';
 import ReservationTimer from '../components/reservations/ReservationTimer';
@@ -21,17 +21,34 @@ function ItemDetailPage({ currentUser }) {
     const [actionError, setActionError] = useState(null);
 
     useEffect(() => {
-        if (item && item.status === ITEM_STATUS.RESERVED) {
-            getReservations({ item_id: item.id, status: RESERVATION_STATUS.ACTIVE })
-                .then(reservations => {
-                    if (reservations.length > 0) {
-                        setReservation(reservations[0]);
-                    }
-                })
-                .catch(console.error);
-        } else {
-            setReservation(null);
-        }
+        const syncReservation = async () => {
+            if (!item) {
+                setReservation(null);
+                return;
+            }
+
+            try {
+                if (item.status === ITEM_STATUS.RESERVED) {
+                    const all = await getReservations({ item_id: item.id });
+                    const relevant = all.find(r => [RESERVATION_STATUS.ACTIVE, RESERVATION_STATUS.PENDING_PAYMENT].includes(r.status));
+                    setReservation(relevant || null);
+                    return;
+                }
+
+                if (item.status === ITEM_STATUS.SOLD) {
+                    const all = await getReservations({ item_id: item.id });
+                    const completed = all.find(r => r.status === RESERVATION_STATUS.COMPLETED);
+                    setReservation(completed || null);
+                    return;
+                }
+
+                setReservation(null);
+            } catch (e) {
+                console.error(e);
+            }
+        };
+
+        syncReservation();
     }, [item]);
 
     if (loading) {
@@ -70,6 +87,15 @@ function ItemDetailPage({ currentUser }) {
         return Number(item.lease_price_per_month);
     };
 
+    const selectedPrice = (() => {
+        const leaseAmount = getLeaseAmount();
+        const wantsLease = transactionType === 'lease';
+        if (wantsLease && leaseAmount != null) {
+            return { label: 'Lease', amount: leaseAmount, suffix: '/month', key: 'lease' };
+        }
+        return { label: 'Buy', amount: item.sell_price, suffix: '', key: 'purchase' };
+    })();
+
 
 
     const handleReserve = async () => {
@@ -77,12 +103,18 @@ function ItemDetailPage({ currentUser }) {
         setActionLoading(true);
         setActionError(null);
         try {
+            const paymentConfig = await getPaymentConfig();
+            const razorpayKeyId = paymentConfig?.razorpay_key_id || import.meta.env.VITE_RAZORPAY_KEY_ID;
+            if (!razorpayKeyId) {
+                throw new Error('Payment is not configured. Razorpay key is missing.');
+            }
+
             // 1. Create order
             const orderRes = await createReservation(item.id, transactionType);
             
             // 2. Open Razorpay Checkout
             const options = {
-                key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+                key: razorpayKeyId,
                 amount: orderRes.amount,
                 currency: orderRes.currency,
                 name: 'Campus MarketPlace',
@@ -130,12 +162,13 @@ function ItemDetailPage({ currentUser }) {
         }
     };
 
-    const handleMarkSold = async () => {
-        if (!currentUser) return;
+    const handleConfirmTransaction = async () => {
+        if (!currentUser || !reservation) return;
         setActionLoading(true);
         setActionError(null);
         try {
-            await markItemSold(item.id);
+            await confirmReservation(reservation.id);
+            setReservation(null);
             refetch();
         } catch (err) {
             setActionError(err.message);
@@ -184,10 +217,19 @@ function ItemDetailPage({ currentUser }) {
 
         if (item.status === ITEM_STATUS.RESERVED) {
             if (isOwner) {
-                return { canAct: true, action: 'confirm-sale' };
+                if (reservation?.status === RESERVATION_STATUS.ACTIVE) {
+                    return { canAct: true, action: 'confirm-sale' };
+                }
+                if (reservation?.status === RESERVATION_STATUS.PENDING_PAYMENT) {
+                    return { canAct: false, reason: 'Waiting for buyer to verify payment.' };
+                }
+                return { canAct: false, reason: 'Reservation details are not available yet.' };
             }
             if (isBuyer) {
-                return { canAct: true, action: 'cancel' };
+                if ([RESERVATION_STATUS.ACTIVE, RESERVATION_STATUS.PENDING_PAYMENT].includes(reservation?.status)) {
+                    return { canAct: true, action: 'cancel' };
+                }
+                return { canAct: false, reason: 'Your reservation cannot be cancelled right now.' };
             }
             return { canAct: false, reason: 'This item is reserved by another user.' };
         }
@@ -209,10 +251,13 @@ function ItemDetailPage({ currentUser }) {
 
                 <h1 className="item-detail-title">{item.title}</h1>
 
-                <div className="item-detail-price">Sell: {formatPrice(item.sell_price)}</div>
-                {item.allow_lease && item.lease_price_per_month && (
+                <div className="item-detail-price">
+                    {selectedPrice.label}: {formatPrice(selectedPrice.amount)}
+                    {selectedPrice.suffix}
+                </div>
+                {item.allow_lease && item.lease_price_per_month && transactionType !== 'lease' && (
                     <p className="lease-price-note">
-                        Lease now for {formatPrice(getLeaseAmount())}/month
+                        Or lease for {formatPrice(getLeaseAmount())}/month
                     </p>
                 )}
                 {item.status === ITEM_STATUS.SOLD && item.deal_amount && (
@@ -248,13 +293,21 @@ function ItemDetailPage({ currentUser }) {
                 {/* Reservation state - only show when reserved */}
                 {item.status === ITEM_STATUS.RESERVED && reservation && (
                     <div className="reservation-info">
-                        <ReservationTimer expiresAt={reservation.expires_at} />
+                        <ReservationTimer expiresAt={reservation.expires_at} onExpired={refetch} />
                         {isBuyer && (
                             <div className="buyer-reservation-message">
                                 <div className="message-icon">⏳</div>
                                 <div className="message-content">
-                                    <strong>Reserved by you</strong>
-                                    <p>Waiting for seller confirmation. You can cancel if needed.</p>
+                                    <strong>
+                                        {reservation.status === RESERVATION_STATUS.PENDING_PAYMENT
+                                            ? 'Payment pending'
+                                            : 'Reserved by you'}
+                                    </strong>
+                                    <p>
+                                        {reservation.status === RESERVATION_STATUS.PENDING_PAYMENT
+                                            ? 'Complete payment verification to notify the seller. You can cancel anytime.'
+                                            : 'Waiting for seller confirmation. You can cancel if needed.'}
+                                    </p>
                                 </div>
                             </div>
                         )}
@@ -327,19 +380,23 @@ function ItemDetailPage({ currentUser }) {
                         <div className="transaction-toggle" role="group" aria-label="Choose buy or lease">
                             <button
                                 type="button"
-                                className={`toggle-btn ${transactionType === 'purchase' ? 'active' : ''}`}
+                                className={`toggle-btn ${transactionType === 'purchase' ? 'active' : ''} toggle-btn--buy`}
                                 disabled={!item.allow_purchase}
                                 onClick={() => setTransactionType('purchase')}
                             >
-                                Buy
+                                <span className="toggle-main">Buy</span>
+                                <span className="toggle-sub">Pay once</span>
                             </button>
                             <button
                                 type="button"
-                                className={`toggle-btn ${transactionType === 'lease' ? 'active' : ''}`}
+                                className={`toggle-btn ${transactionType === 'lease' ? 'active' : ''} toggle-btn--lease`}
                                 disabled={!item.allow_lease}
                                 onClick={() => setTransactionType('lease')}
                             >
-                                Lease
+                                <span className="toggle-main">Lease</span>
+                                <span className="toggle-sub">
+                                    {getLeaseAmount() != null ? `₹${Number(getLeaseAmount()).toFixed(2)}/month` : 'Set price'}
+                                </span>
                             </button>
                         </div>
                     )}
@@ -352,8 +409,13 @@ function ItemDetailPage({ currentUser }) {
                             )}
                             {actionState.action === 'confirm-sale' && (
                                 <div className="action-group">
-                                    <Button variant="success" size="large" onClick={handleMarkSold} loading={actionLoading}>
-                                        Confirm Transaction
+                                    <Button
+                                        variant="success"
+                                        size="large"
+                                        onClick={handleConfirmTransaction}
+                                        loading={actionLoading}
+                                    >
+                                        {reservation?.transaction_type === 'lease' ? 'Confirm Lease' : 'Confirm Sale'}
                                     </Button>
                                     <Button variant="danger" size="large" onClick={handleCancel} loading={actionLoading}>
                                         Cancel Reservation
