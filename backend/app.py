@@ -21,6 +21,7 @@ from services.auth import (
 from services.categories import get_category, list_categories
 from services.items import create_item, get_item, get_recently_listed, list_items
 from services.reservations import cancel_reservation, confirm_reservation, list_reservations, reserve_item, verify_payment
+from services.notifications import list_notifications, list_unread_notification_count, mark_notification_read
 from services.users import get_user, list_users
 
 load_dotenv()
@@ -344,6 +345,42 @@ def cancel_reservation_endpoint(current_user, reservation_id):
     result = cancel_reservation(reservation_id, current_user['id'])
     status_code = 200 if 'error' not in result else 400
     return jsonify(result), status_code
+
+
+@app.route('/notifications', methods=['GET'])
+@login_required
+def notifications_list_endpoint(current_user):
+    limit = request.args.get('limit', 20)
+    try:
+        limit = int(limit)
+    except (TypeError, ValueError):
+        limit = 20
+    notifications = list_notifications(current_user['id'], limit=limit)
+    return jsonify(notifications), 200
+
+
+@app.route('/notifications/unread-count', methods=['GET'])
+@login_required
+def notifications_unread_count_endpoint(current_user):
+    count = list_unread_notification_count(current_user['id'])
+    return jsonify({'unread_count': count}), 200
+
+
+@app.route('/notifications/<notification_id>/read', methods=['POST'])
+@login_required
+def notifications_mark_read_endpoint(current_user, notification_id):
+    ok = mark_notification_read(notification_id, current_user['id'])
+    if not ok:
+        return jsonify({'error': 'Notification not found'}), 404
+    return jsonify({'status': 'read'}), 200
+
+
+@app.route('/payments/config', methods=['GET'])
+@login_required
+def payments_config_endpoint(current_user):
+    # Expose only Razorpay public key to authenticated frontend.
+    key_id = os.environ.get('RAZORPAY_KEY_ID')
+    return jsonify({'razorpay_key_id': key_id}), 200
 
 
 if __name__ == '__main__':

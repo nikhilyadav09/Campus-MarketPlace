@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import UserMenu from './UserMenu';
+import NotificationBell from './NotificationBell';
 import './Header.css';
 
 function Header({ currentUser }) {
@@ -92,6 +93,7 @@ function Header({ currentUser }) {
                         <span></span>
                     </button>
 
+                    <NotificationBell currentUser={currentUser} />
                     <UserMenu currentUser={currentUser} />
                 </div>
             </div>

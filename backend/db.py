@@ -39,12 +39,59 @@ def ensure_auth_columns():
         conn.commit()
 
 
+def ensure_runtime_schema():
+    """
+    Backfill non-breaking schema updates for existing local databases.
+    Keeps app usable without forcing full re-seed.
+    """
+    global pool
+    if pool is None:
+        return
+
+    with pool.connection() as conn:
+        with conn.cursor() as cur:
+            # Notifications table (added after initial schema).
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS notifications (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    recipient_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    sender_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+                    reservation_id UUID REFERENCES reservations(id) ON DELETE SET NULL,
+                    item_id UUID REFERENCES items(id) ON DELETE SET NULL,
+                    type VARCHAR(50) NOT NULL,
+                    message TEXT NOT NULL,
+                    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    read_at TIMESTAMPTZ
+                )
+                """
+            )
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_notifications_recipient ON notifications(recipient_user_id)")
+            cur.execute(
+                "CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(recipient_user_id) WHERE is_read = FALSE"
+            )
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC)")
+
+            # Reservation payout bookkeeping (seller gets 30% only after confirmation).
+            cur.execute(
+                """
+                ALTER TABLE IF EXISTS reservations
+                ADD COLUMN IF NOT EXISTS seller_release_percentage NUMERIC(5, 2),
+                ADD COLUMN IF NOT EXISTS seller_release_amount NUMERIC(10, 2),
+                ADD COLUMN IF NOT EXISTS seller_released_at TIMESTAMPTZ
+                """
+            )
+        conn.commit()
+
+
 def init_db_pool(app):
     """Initialize connection pool."""
     global pool
     db_url = get_db_url()
     pool = ConnectionPool(conninfo=db_url, min_size=1, max_size=10, kwargs={"row_factory": psycopg.rows.dict_row})
     ensure_auth_columns()
+    ensure_runtime_schema()
 
     @app.teardown_appcontext
     def close_db(error):
@@ -70,6 +117,7 @@ def get_db():
             db_url = get_db_url()
             pool = ConnectionPool(conninfo=db_url, min_size=1, max_size=10, kwargs={"row_factory": psycopg.rows.dict_row})
             ensure_auth_columns()
+            ensure_runtime_schema()
         g.db_conn = pool.getconn()
     return g.db_conn
 

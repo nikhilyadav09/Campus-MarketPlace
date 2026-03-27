@@ -2,6 +2,10 @@ from db import get_cursor, get_db
 
 def list_items(category_id=None, seller_id=None, status=None, exclude_seller_id=None):
     """List all items with optional filters. Includes buyer info for sold/reserved items."""
+    # Keep item status consistent with reservation expirations.
+    from services.reservations import expire_reservations_if_needed
+    expire_reservations_if_needed()
+
     query = """
         SELECT i.id, i.title, i.original_price, i.sell_price, i.lease_price_per_month,
                i.status, i.image_url,
@@ -76,6 +80,10 @@ def create_item(
 
 def get_item(item_id):
     """Get item by ID."""
+    # Keep item status consistent with reservation expirations.
+    from services.reservations import expire_reservations_if_needed
+    expire_reservations_if_needed()
+
     with get_cursor() as cur:
         cur.execute("""
             SELECT i.id, i.title, i.original_price, i.sell_price, i.lease_price_per_month,

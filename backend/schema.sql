@@ -111,6 +111,9 @@ CREATE TABLE reservations (
     razorpay_order_id VARCHAR(255),
     razorpay_payment_id VARCHAR(255),
     razorpay_signature VARCHAR(255),
+    seller_release_percentage NUMERIC(5, 2),
+    seller_release_amount NUMERIC(10, 2),
+    seller_released_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     expires_at TIMESTAMPTZ NOT NULL,
     
@@ -144,3 +147,23 @@ CREATE INDEX idx_reservations_expires_at ON reservations(expires_at);
 -- Partial index to ensure only ONE active reservation per item
 -- This enforces exclusivity while allowing history (cancelled/expired/completed)
 CREATE UNIQUE INDEX uq_active_reservations_item ON reservations(item_id) WHERE status IN ('active', 'pending_payment');
+
+-- ============================================================================
+-- NOTIFICATIONS TABLE
+-- ============================================================================
+CREATE TABLE notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    recipient_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    sender_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    reservation_id UUID REFERENCES reservations(id) ON DELETE SET NULL,
+    item_id UUID REFERENCES items(id) ON DELETE SET NULL,
+    type VARCHAR(50) NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    read_at TIMESTAMPTZ
+);
+
+CREATE INDEX idx_notifications_recipient ON notifications(recipient_user_id);
+CREATE INDEX idx_notifications_unread ON notifications(recipient_user_id) WHERE is_read = FALSE;
+CREATE INDEX idx_notifications_created_at ON notifications(created_at DESC);

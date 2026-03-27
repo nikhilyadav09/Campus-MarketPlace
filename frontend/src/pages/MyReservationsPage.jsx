@@ -42,7 +42,8 @@ function MyReservationsPage({ currentUser }) {
     }
 
     // Separate reservations by status
-    const activeReservations = reservations.filter(r => r.status === RESERVATION_STATUS.ACTIVE);
+    const activeReservations = reservations.filter(r => [RESERVATION_STATUS.ACTIVE, RESERVATION_STATUS.PENDING_PAYMENT].includes(r.status));
+    const pendingPaymentReservations = reservations.filter(r => r.status === RESERVATION_STATUS.PENDING_PAYMENT);
     const completedReservations = reservations.filter(r => r.status === RESERVATION_STATUS.COMPLETED);
     const cancelledReservations = reservations.filter(r =>
         r.status === RESERVATION_STATUS.CANCELLED || r.status === RESERVATION_STATUS.EXPIRED
@@ -52,9 +53,9 @@ function MyReservationsPage({ currentUser }) {
         <div className="my-reservations-page">
             <header className="page-header">
                 <h1 className="page-title">My Reservations</h1>
-                {activeReservations.length > 0 && (
-                    <span className="active-count">{activeReservations.length} active</span>
-                )}
+                        {activeReservations.length > 0 && (
+                            <span className="active-count">{activeReservations.length} active</span>
+                        )}
             </header>
 
             {loading ? (
@@ -72,7 +73,11 @@ function MyReservationsPage({ currentUser }) {
                         <h2 className="section-title">Active Reservations</h2>
                         {activeReservations.length > 0 ? (
                             <>
-                                <p className="section-note">⏳ Waiting for seller confirmation. You can cancel anytime.</p>
+                                <p className="section-note">
+                                    {pendingPaymentReservations.length > 0
+                                        ? '⏳ Pending payment verification. You can cancel anytime before confirmation.'
+                                        : '⏳ Waiting for seller confirmation. You can cancel anytime.'}
+                                </p>
                                 <ReservationList
                                     reservations={activeReservations}
                                     onCancel={handleCancel}

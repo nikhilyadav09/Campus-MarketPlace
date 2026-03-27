@@ -7,6 +7,7 @@ export const ITEM_STATUS = {
 };
 
 export const RESERVATION_STATUS = {
+  PENDING_PAYMENT: 'pending_payment',
   ACTIVE: 'active',
   COMPLETED: 'completed',
   CANCELLED: 'cancelled',

@@ -19,6 +19,8 @@ function StatusBadge({ status, type = 'item', clickable = false, onClick }) {
             }
         } else {
             switch (status) {
+                case RESERVATION_STATUS.PENDING_PAYMENT:
+                    return { label: 'Pending Payment', variant: 'reserved' };
                 case RESERVATION_STATUS.ACTIVE:
                     return { label: 'Active', variant: 'reserved' };
                 case RESERVATION_STATUS.COMPLETED:
