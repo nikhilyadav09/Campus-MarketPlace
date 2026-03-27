@@ -16,8 +16,12 @@ export function getReservation(reservationId) {
     return get(`/reservations/${reservationId}`);
 }
 
-export function createReservation(itemId, transactionType = 'purchase') {
-    return post(`/items/${itemId}/reserve`, { transaction_type: transactionType });
+export function createReservation(itemId, transactionType = 'purchase', leaseDays = null) {
+    const payload = { transaction_type: transactionType };
+    if (transactionType === 'lease' && leaseDays != null) {
+        payload.lease_days = leaseDays;
+    }
+    return post(`/items/${itemId}/reserve`, payload);
 }
 
 export function confirmReservation(reservationId) {
@@ -30,4 +34,12 @@ export function cancelReservation(reservationId) {
 
 export function verifyPayment(reservationId, paymentData) {
     return post(`/reservations/${reservationId}/verify-payment`, paymentData);
+}
+
+export function createFinalPaymentOrder(reservationId) {
+    return post(`/reservations/${reservationId}/final-payment-order`, {});
+}
+
+export function verifyFinalPayment(reservationId, paymentData) {
+    return post(`/reservations/${reservationId}/verify-final-payment`, paymentData);
 }

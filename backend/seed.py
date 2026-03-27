@@ -113,7 +113,8 @@ def seed_data():
                     'sell_price': 720.00,
                     'allow_purchase': True,
                     'allow_lease': True,
-                    'lease_price_per_month': 90.00,
+                    'lease_price_per_day': 90.00,
+                    'max_lease_days': 10,
                     'status': 'available',
                     'category': 'Electronics',
                     'seller': ajay_id
@@ -126,7 +127,8 @@ def seed_data():
                     'sell_price': 55.00,
                     'allow_purchase': True,
                     'allow_lease': False,
-                    'lease_price_per_month': None,
+                    'lease_price_per_day': None,
+                    'max_lease_days': None,
                     'status': 'available',
                     'category': 'Books',
                     'seller': ajay_id
@@ -141,7 +143,8 @@ def seed_data():
                     'sell_price': 18.00,
                     'allow_purchase': True,
                     'allow_lease': True,
-                    'lease_price_per_month': 3.00,
+                    'lease_price_per_day': 3.00,
+                    'max_lease_days': 7,
                     'status': 'available',
                     'category': 'Clothing',
                     'seller': ritik_id
@@ -154,7 +157,8 @@ def seed_data():
                     'sell_price': 40.00,
                     'allow_purchase': False,
                     'allow_lease': True,
-                    'lease_price_per_month': 5.00,
+                    'lease_price_per_day': 5.00,
+                    'max_lease_days': 10,
                     'status': 'available',
                     'category': 'Electronics',
                     'seller': ritik_id
@@ -169,7 +173,8 @@ def seed_data():
                     'sell_price': 22.00,
                     'allow_purchase': True,
                     'allow_lease': False,
-                    'lease_price_per_month': None,
+                    'lease_price_per_day': None,
+                    'max_lease_days': None,
                     'status': 'sold',
                     'category': 'Books',
                     'seller': manu_id
@@ -182,7 +187,8 @@ def seed_data():
                     'sell_price': 25.00,
                     'allow_purchase': True,
                     'allow_lease': True,
-                    'lease_price_per_month': 4.00,
+                    'lease_price_per_day': 4.00,
+                    'max_lease_days': 15,
                     'status': 'available',
                     'category': 'Accessories',
                     'seller': manu_id
@@ -201,12 +207,13 @@ def seed_data():
                         sell_price,
                         allow_purchase,
                         allow_lease,
-                        lease_price_per_month,
+                        lease_price_per_day,
+                        max_lease_days,
                         status,
                         seller_id,
                         category_id
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id
                 """, (
                     item['title'],
@@ -216,7 +223,8 @@ def seed_data():
                     item['sell_price'],
                     item['allow_purchase'],
                     item['allow_lease'],
-                    item['lease_price_per_month'],
+                    item['lease_price_per_day'],
+                    item['max_lease_days'],
                     item['status'],
                     item['seller'],
                     categories[item['category']]
@@ -242,8 +250,8 @@ def seed_data():
 
             # 2. EXPIRED reservation (Mechanical Keyboard)
             cur.execute("""
-                INSERT INTO reservations (item_id, buyer_id, transaction_type, lease_amount, status, expires_at, created_at)
-                VALUES (%s, %s, 'purchase', NULL, 'completed', %s, %s)
+                INSERT INTO reservations (item_id, buyer_id, transaction_type, lease_amount, initial_amount, final_amount_due, status, expires_at, created_at)
+                VALUES (%s, %s, 'purchase', NULL, 0, 0, 'completed', %s, %s)
             """, (
                 created_items['Mechanical Keyboard (Red Switches)'],
                 ajay_id,  # Ajay tried to reserve Ritik's keyboard but didn't complete
@@ -254,12 +262,15 @@ def seed_data():
 
             # 3. CANCELLED reservation (Laptop Backpack)
             cur.execute("""
-                INSERT INTO reservations (item_id, buyer_id, transaction_type, lease_amount, status, expires_at, created_at)
-                VALUES (%s, %s, 'lease', %s, 'cancelled', %s, %s)
+                INSERT INTO reservations (item_id, buyer_id, transaction_type, lease_days, lease_amount, initial_amount, final_amount_due, status, expires_at, created_at)
+                VALUES (%s, %s, 'lease', %s, %s, %s, %s, 'cancelled', %s, %s)
             """, (
                 created_items['Laptop Backpack (Water Resistant)'],
                 ajay_id,  # Ajay cancelled his reservation on Manu's backpack
+                2,
                 1.25,
+                1.00,
+                0.25,
                 now + timedelta(hours=20),  # Would have expired later
                 now - timedelta(days=1)     # Created yesterday
             ))
@@ -267,11 +278,13 @@ def seed_data():
 
             # 4. ACTIVE reservation (HP Laptop) - for testing Confirm Sale
             cur.execute("""
-                INSERT INTO reservations (item_id, buyer_id, transaction_type, lease_amount, status, expires_at, created_at)
-                VALUES (%s, %s, 'purchase', NULL, 'active', %s, %s)
+                INSERT INTO reservations (item_id, buyer_id, transaction_type, lease_amount, initial_amount, final_amount_due, status, expires_at, created_at)
+                VALUES (%s, %s, 'purchase', NULL, %s, %s, 'awaiting_seller_confirmation', %s, %s)
             """, (
                 created_items['HP Pavilion 15 Laptop'],
                 manu_id,  # Manu is reserving Ajay's laptop
+                14.40,
+                705.60,
                 now + timedelta(hours=23),  # Expires in 23 hours
                 now - timedelta(hours=1)    # Created 1 hour ago
             ))

@@ -8,9 +8,15 @@ import { RESERVATION_STATUS } from '../../constants/status';
 import './ReservationCard.css';
 
 function ReservationCard({ reservation, onConfirm, onCancel, confirming, cancelling }) {
-    const isActive = reservation.status === RESERVATION_STATUS.ACTIVE;
-    const isCancellable = [RESERVATION_STATUS.ACTIVE, RESERVATION_STATUS.PENDING_PAYMENT].includes(reservation.status);
-    const showTimer = [RESERVATION_STATUS.ACTIVE, RESERVATION_STATUS.PENDING_PAYMENT].includes(reservation.status);
+    const isActive = reservation.status === RESERVATION_STATUS.AWAITING_SELLER_CONFIRMATION;
+    const isOpenReservation = [
+        RESERVATION_STATUS.PENDING_INITIAL_PAYMENT,
+        RESERVATION_STATUS.AWAITING_SELLER_CONFIRMATION,
+        RESERVATION_STATUS.AWAITING_FINAL_PAYMENT,
+    ].includes(reservation.status);
+    const showTimer = isOpenReservation;
+    const canShowCancel = Boolean(onCancel) && reservation.status === RESERVATION_STATUS.PENDING_INITIAL_PAYMENT;
+    const canShowActions = Boolean(onConfirm) || canShowCancel;
     const isCompleted = reservation.status === RESERVATION_STATUS.COMPLETED;
 
     // Use full item details from reservation
@@ -38,7 +44,7 @@ function ReservationCard({ reservation, onConfirm, onCancel, confirming, cancell
                         {categoryName && <span className="reservation-category">{categoryName}</span>}
                         {payableAmount && (
                             <span className="reservation-price">
-                                {reservation.transaction_type === 'lease' ? 'Lease ' : 'Buy '}
+                                {reservation.transaction_type === 'lease' ? `Lease (${reservation.lease_days || '-'}d) ` : 'Buy '}
                                 ₹{Number(payableAmount).toFixed(2)}
                             </span>
                         )}
@@ -69,7 +75,7 @@ function ReservationCard({ reservation, onConfirm, onCancel, confirming, cancell
                         <div className="reservation-completed-message">
                             <div className="completed-icon">✅</div>
                             <div className="completed-text">
-                                <strong>Order Confirmed!</strong>
+                                <strong>Order Completed!</strong>
                                 <p>Contact <strong>{sellerName}</strong> to complete the transaction</p>
                                 {reservation.seller_mobile && (
                                     <p className="contact-details">📱 {reservation.seller_mobile}</p>
@@ -83,7 +89,7 @@ function ReservationCard({ reservation, onConfirm, onCancel, confirming, cancell
                 </div>
             </div>
 
-            {isCancellable && (
+            {canShowActions && (
                 <div className="reservation-card-actions">
                     {onConfirm && (
                         <Button
@@ -96,7 +102,7 @@ function ReservationCard({ reservation, onConfirm, onCancel, confirming, cancell
                             Confirm Sale
                         </Button>
                     )}
-                    {onCancel && (
+                    {canShowCancel && (
                         <Button
                             variant="danger"
                             size="small"

@@ -42,8 +42,14 @@ function MyReservationsPage({ currentUser }) {
     }
 
     // Separate reservations by status
-    const activeReservations = reservations.filter(r => [RESERVATION_STATUS.ACTIVE, RESERVATION_STATUS.PENDING_PAYMENT].includes(r.status));
-    const pendingPaymentReservations = reservations.filter(r => r.status === RESERVATION_STATUS.PENDING_PAYMENT);
+    const activeReservations = reservations.filter(r =>
+        [
+            RESERVATION_STATUS.PENDING_INITIAL_PAYMENT,
+            RESERVATION_STATUS.AWAITING_SELLER_CONFIRMATION,
+            RESERVATION_STATUS.AWAITING_FINAL_PAYMENT
+        ].includes(r.status)
+    );
+    const pendingPaymentReservations = reservations.filter(r => r.status === RESERVATION_STATUS.PENDING_INITIAL_PAYMENT);
     const completedReservations = reservations.filter(r => r.status === RESERVATION_STATUS.COMPLETED);
     const cancelledReservations = reservations.filter(r =>
         r.status === RESERVATION_STATUS.CANCELLED || r.status === RESERVATION_STATUS.EXPIRED
@@ -75,8 +81,8 @@ function MyReservationsPage({ currentUser }) {
                             <>
                                 <p className="section-note">
                                     {pendingPaymentReservations.length > 0
-                                        ? '⏳ Pending payment verification. You can cancel anytime before confirmation.'
-                                        : '⏳ Waiting for seller confirmation. You can cancel anytime.'}
+                                        ? '⏳ Pending initial payment verification. You can cancel anytime before confirmation.'
+                                        : '⏳ Waiting for seller confirmation or final payment. After payment, only seller can cancel (with refund).'}
                                 </p>
                                 <ReservationList
                                     reservations={activeReservations}

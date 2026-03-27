@@ -20,7 +20,15 @@ from services.auth import (
 )
 from services.categories import get_category, list_categories
 from services.items import create_item, get_item, get_recently_listed, list_items
-from services.reservations import cancel_reservation, confirm_reservation, list_reservations, reserve_item, verify_payment
+from services.reservations import (
+    cancel_reservation,
+    confirm_reservation,
+    create_final_payment_order,
+    list_reservations,
+    reserve_item,
+    verify_final_payment,
+    verify_payment,
+)
 from services.notifications import list_notifications, list_unread_notification_count, mark_notification_read
 from services.users import get_user, list_users
 
@@ -155,18 +163,24 @@ def items_endpoint():
     if sell_price < min_sell or sell_price > max_sell:
         return jsonify({'error': f'Sell price must be between ₹{min_sell:.0f} and ₹{max_sell:.0f} (30-50% of original price)'}), 400
 
-    lease_price_per_month = None
+    lease_price_per_day = None
+    max_lease_days = None
     if allow_lease:
-        if 'lease_price_per_month' not in data or data['lease_price_per_month'] is None:
-            return jsonify({'error': 'Lease price per month is required when leasing is enabled'}), 400
+        if 'lease_price_per_day' not in data or data['lease_price_per_day'] is None:
+            return jsonify({'error': 'Lease price per day is required when leasing is enabled'}), 400
+        if 'max_lease_days' not in data or data['max_lease_days'] is None:
+            return jsonify({'error': 'Maximum lease days is required when leasing is enabled'}), 400
         try:
-            lease_price_per_month = float(data['lease_price_per_month'])
+            lease_price_per_day = float(data['lease_price_per_day'])
+            max_lease_days = int(data['max_lease_days'])
         except (TypeError, ValueError):
-            return jsonify({'error': 'lease_price_per_month must be a number'}), 400
+            return jsonify({'error': 'lease_price_per_day must be a number and max_lease_days must be an integer'}), 400
+        if max_lease_days < 1 or max_lease_days > 365:
+            return jsonify({'error': 'max_lease_days must be between 1 and 365'}), 400
         min_lease = original_price * 0.03
         max_lease = original_price * 0.08
-        if lease_price_per_month < min_lease or lease_price_per_month > max_lease:
-            return jsonify({'error': f'Lease price must be between ₹{min_lease:.0f} and ₹{max_lease:.0f}/month (3-8% of original price)'}), 400
+        if lease_price_per_day < min_lease or lease_price_per_day > max_lease:
+            return jsonify({'error': f'Lease price must be between ₹{min_lease:.0f} and ₹{max_lease:.0f}/day (3-8% of original price)'}), 400
 
     try:
         item = create_item(
@@ -179,7 +193,8 @@ def items_endpoint():
             image_url=data.get('image_url'),
             allow_purchase=allow_purchase,
             allow_lease=allow_lease,
-            lease_price_per_month=lease_price_per_month,
+            lease_price_per_day=lease_price_per_day,
+            max_lease_days=max_lease_days,
         )
         return jsonify(item), 201
     except Exception as exc:
@@ -228,7 +243,7 @@ def mark_item_sold_endpoint(current_user, item_id):
                 """
                 UPDATE reservations
                 SET status = 'completed'
-                WHERE item_id = %s AND status = 'active'
+                WHERE item_id = %s AND status = 'awaiting_final_payment'
                 RETURNING id
                 """,
                 (item_id,),
@@ -236,10 +251,10 @@ def mark_item_sold_endpoint(current_user, item_id):
             reservation_updated = cur.fetchone()
 
             if not reservation_updated:
-                # If no active reservation was found, we shouldn't have marked it as sold
+                # If no reservation was found in final-payment stage, don't mark sold.
                 # unless we want to support manual "sold" without reservation (which we don't yet)
                 conn.rollback()
-                return jsonify({'error': 'No active reservation found for this item. Only reserved items can be confirmed as sold.'}), 400
+                return jsonify({'error': 'No reservation is ready to finalize for this item.'}), 400
 
             conn.commit()
             return jsonify({'status': 'sold', 'item_id': item_id, 'reservation_id': reservation_updated['id']}), 200
@@ -279,10 +294,19 @@ def get_user_endpoint(user_id):
 @app.route('/reservations', methods=['GET', 'POST'])
 def reservations_endpoint():
     if request.method == 'GET':
+        current_user = get_authenticated_user()
+        if not current_user:
+            return jsonify({'error': 'Authentication required'}), 401
         buyer_id = request.args.get('buyer_id')
         status = request.args.get('status')
         item_id = request.args.get('item_id')
-        reservations = list_reservations(buyer_id=buyer_id, status=status)
+        if buyer_id and str(buyer_id) != str(current_user['id']):
+            return jsonify({'error': 'Not authorized'}), 403
+        reservations = list_reservations(
+            buyer_id=buyer_id or None,
+            status=status,
+            participant_id=current_user['id'],
+        )
         if item_id:
             reservations = [reservation for reservation in reservations if str(reservation['item_id']) == str(item_id)]
         return jsonify(reservations)
@@ -294,16 +318,20 @@ def reservations_endpoint():
     data = request.json or {}
     item_id = data.get('item_id')
     transaction_type = data.get('transaction_type', 'purchase')
+    lease_days = data.get('lease_days')
     if not item_id:
         return jsonify({'error': 'item_id required'}), 400
 
-    result = reserve_item(item_id, current_user['id'], transaction_type=transaction_type)
+    result = reserve_item(item_id, current_user['id'], transaction_type=transaction_type, lease_days=lease_days)
     status_code = 201 if 'error' not in result else 409
     return jsonify(result), status_code
 
 @app.route('/reservations/<reservation_id>', methods=['GET'])
 def get_reservation_endpoint(reservation_id):
-    reservations = list_reservations()
+    current_user = get_authenticated_user()
+    if not current_user:
+        return jsonify({'error': 'Authentication required'}), 401
+    reservations = list_reservations(participant_id=current_user['id'])
     for reservation in reservations:
         if str(reservation['id']) == str(reservation_id):
             return jsonify(reservation)
@@ -315,7 +343,8 @@ def get_reservation_endpoint(reservation_id):
 def reserve_item_endpoint(current_user, item_id):
     data = request.json or {}
     transaction_type = data.get('transaction_type', 'purchase')
-    result = reserve_item(item_id, current_user['id'], transaction_type=transaction_type)
+    lease_days = data.get('lease_days')
+    result = reserve_item(item_id, current_user['id'], transaction_type=transaction_type, lease_days=lease_days)
     status_code = 201 if 'error' not in result else 409
     return jsonify(result), status_code
 
@@ -338,6 +367,34 @@ def verify_payment_endpoint(current_user, reservation_id):
         buyer_id=current_user['id']
     )
     
+    status_code = 200 if 'error' not in result else 400
+    return jsonify(result), status_code
+
+
+@app.route('/reservations/<reservation_id>/final-payment-order', methods=['POST'])
+@login_required
+def create_final_payment_order_endpoint(current_user, reservation_id):
+    result = create_final_payment_order(reservation_id, current_user['id'])
+    status_code = 200 if 'error' not in result else 400
+    return jsonify(result), status_code
+
+
+@app.route('/reservations/<reservation_id>/verify-final-payment', methods=['POST'])
+@login_required
+def verify_final_payment_endpoint(current_user, reservation_id):
+    data = request.json or {}
+    razorpay_payment_id = data.get('razorpay_payment_id')
+    razorpay_order_id = data.get('razorpay_order_id')
+    razorpay_signature = data.get('razorpay_signature')
+    if not all([razorpay_payment_id, razorpay_order_id, razorpay_signature]):
+        return jsonify({'error': 'Missing Razorpay parameters'}), 400
+    result = verify_final_payment(
+        reservation_id=reservation_id,
+        razorpay_payment_id=razorpay_payment_id,
+        razorpay_order_id=razorpay_order_id,
+        razorpay_signature=razorpay_signature,
+        buyer_id=current_user['id'],
+    )
     status_code = 200 if 'error' not in result else 400
     return jsonify(result), status_code
 

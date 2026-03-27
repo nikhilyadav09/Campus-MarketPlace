@@ -82,6 +82,112 @@ def ensure_runtime_schema():
                 ADD COLUMN IF NOT EXISTS seller_released_at TIMESTAMPTZ
                 """
             )
+
+            # Lease pricing migrated from monthly to daily model.
+            cur.execute(
+                """
+                ALTER TABLE IF EXISTS items
+                ADD COLUMN IF NOT EXISTS lease_price_per_day NUMERIC(10, 2),
+                ADD COLUMN IF NOT EXISTS max_lease_days INTEGER
+                """
+            )
+            cur.execute(
+                """
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_name = 'items' AND column_name = 'lease_price_per_month'
+                    ) THEN
+                        EXECUTE 'UPDATE items
+                                 SET lease_price_per_day = COALESCE(lease_price_per_day, lease_price_per_month)
+                                 WHERE allow_lease = TRUE';
+                    END IF;
+                END $$;
+                """
+            )
+            cur.execute(
+                """
+                UPDATE items
+                SET max_lease_days = COALESCE(max_lease_days, 30)
+                WHERE allow_lease = TRUE
+                """
+            )
+            cur.execute("ALTER TABLE IF EXISTS items DROP CONSTRAINT IF EXISTS chk_items_lease_price_valid")
+            cur.execute(
+                """
+                ALTER TABLE IF EXISTS items
+                ADD CONSTRAINT chk_items_lease_price_valid
+                CHECK (
+                    (allow_lease = FALSE AND lease_price_per_day IS NULL AND max_lease_days IS NULL)
+                    OR (
+                        allow_lease = TRUE
+                        AND lease_price_per_day IS NOT NULL
+                        AND max_lease_days IS NOT NULL
+                        AND lease_price_per_day >= original_price * 0.03
+                        AND lease_price_per_day <= original_price * 0.08
+                        AND max_lease_days >= 1
+                        AND max_lease_days <= 365
+                    )
+                )
+                """
+            )
+
+            # Staged payment support.
+            cur.execute(
+                """
+                ALTER TABLE IF EXISTS reservations
+                ADD COLUMN IF NOT EXISTS lease_days INTEGER,
+                ADD COLUMN IF NOT EXISTS initial_amount NUMERIC(10, 2),
+                ADD COLUMN IF NOT EXISTS final_amount_due NUMERIC(10, 2),
+                ADD COLUMN IF NOT EXISTS initial_order_id VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS initial_payment_id VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS initial_signature VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS final_order_id VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS final_payment_id VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS final_signature VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS initial_paid_at TIMESTAMPTZ,
+                ADD COLUMN IF NOT EXISTS final_paid_at TIMESTAMPTZ,
+                ADD COLUMN IF NOT EXISTS forfeited_amount NUMERIC(10, 2)
+                """
+            )
+            cur.execute(
+                """
+                UPDATE reservations
+                SET initial_amount = COALESCE(initial_amount, 0),
+                    final_amount_due = COALESCE(final_amount_due, 0)
+                WHERE initial_amount IS NULL OR final_amount_due IS NULL
+                """
+            )
+            cur.execute("ALTER TABLE IF EXISTS reservations ALTER COLUMN status SET DEFAULT 'pending_initial_payment'")
+            cur.execute("ALTER TABLE IF EXISTS reservations ALTER COLUMN initial_amount SET DEFAULT 0")
+            cur.execute("ALTER TABLE IF EXISTS reservations ALTER COLUMN final_amount_due SET DEFAULT 0")
+            cur.execute("ALTER TABLE IF EXISTS reservations ALTER COLUMN initial_amount SET NOT NULL")
+            cur.execute("ALTER TABLE IF EXISTS reservations ALTER COLUMN final_amount_due SET NOT NULL")
+            cur.execute("ALTER TABLE IF EXISTS reservations DROP CONSTRAINT IF EXISTS chk_reservations_status_valid")
+            cur.execute(
+                """
+                ALTER TABLE IF EXISTS reservations
+                ADD CONSTRAINT chk_reservations_status_valid
+                CHECK (status IN (
+                    'pending_initial_payment',
+                    'awaiting_seller_confirmation',
+                    'awaiting_final_payment',
+                    'completed',
+                    'cancelled',
+                    'expired'
+                ))
+                """
+            )
+            cur.execute("DROP INDEX IF EXISTS uq_active_reservations_item")
+            cur.execute(
+                """
+                CREATE UNIQUE INDEX IF NOT EXISTS uq_active_reservations_item
+                ON reservations(item_id)
+                WHERE status IN ('pending_initial_payment', 'awaiting_seller_confirmation', 'awaiting_final_payment')
+                """
+            )
         conn.commit()
 
 

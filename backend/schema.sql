@@ -56,7 +56,8 @@ CREATE TABLE items (
     image_url VARCHAR(500),
     original_price NUMERIC(10, 2) NOT NULL,
     sell_price NUMERIC(10, 2) NOT NULL,
-    lease_price_per_month NUMERIC(10, 2),
+    lease_price_per_day NUMERIC(10, 2),
+    max_lease_days INTEGER,
     allow_purchase BOOLEAN NOT NULL DEFAULT TRUE,
     allow_lease BOOLEAN NOT NULL DEFAULT FALSE,
     status VARCHAR(20) NOT NULL DEFAULT 'available',
@@ -74,9 +75,16 @@ CREATE TABLE items (
         CHECK (allow_purchase OR allow_lease),
     CONSTRAINT chk_items_lease_price_valid
         CHECK (
-            (allow_lease = FALSE AND lease_price_per_month IS NULL)
-            OR (allow_lease = TRUE AND lease_price_per_month >= original_price * 0.03
-                AND lease_price_per_month <= original_price * 0.08)
+            (allow_lease = FALSE AND lease_price_per_day IS NULL AND max_lease_days IS NULL)
+            OR (
+                allow_lease = TRUE
+                AND lease_price_per_day IS NOT NULL
+                AND max_lease_days IS NOT NULL
+                AND lease_price_per_day >= original_price * 0.03
+                AND lease_price_per_day <= original_price * 0.08
+                AND max_lease_days >= 1
+                AND max_lease_days <= 365
+            )
         ),
     CONSTRAINT chk_items_status_valid 
         CHECK (status IN ('available', 'reserved', 'sold')),
@@ -106,8 +114,20 @@ CREATE TABLE reservations (
     item_id UUID NOT NULL,
     buyer_id UUID NOT NULL,
     transaction_type VARCHAR(20) NOT NULL DEFAULT 'purchase',
+    lease_days INTEGER,
     lease_amount NUMERIC(10, 2),
-    status VARCHAR(30) NOT NULL DEFAULT 'pending_payment',
+    initial_amount NUMERIC(10, 2) NOT NULL,
+    final_amount_due NUMERIC(10, 2) NOT NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'pending_initial_payment',
+    initial_order_id VARCHAR(255),
+    initial_payment_id VARCHAR(255),
+    initial_signature VARCHAR(255),
+    final_order_id VARCHAR(255),
+    final_payment_id VARCHAR(255),
+    final_signature VARCHAR(255),
+    initial_paid_at TIMESTAMPTZ,
+    final_paid_at TIMESTAMPTZ,
+    forfeited_amount NUMERIC(10, 2),
     razorpay_order_id VARCHAR(255),
     razorpay_payment_id VARCHAR(255),
     razorpay_signature VARCHAR(255),
@@ -119,14 +139,16 @@ CREATE TABLE reservations (
     
     -- Constraints
     CONSTRAINT chk_reservations_status_valid 
-        CHECK (status IN ('pending_payment', 'active', 'completed', 'cancelled', 'expired')),
+        CHECK (status IN ('pending_initial_payment', 'awaiting_seller_confirmation', 'awaiting_final_payment', 'completed', 'cancelled', 'expired')),
     CONSTRAINT chk_reservations_transaction_type_valid
         CHECK (transaction_type IN ('purchase', 'lease')),
     CONSTRAINT chk_reservations_lease_amount_valid
         CHECK (
-            (transaction_type = 'purchase' AND lease_amount IS NULL)
-            OR (transaction_type = 'lease' AND lease_amount IS NOT NULL AND lease_amount >= 0)
+            (transaction_type = 'purchase' AND lease_amount IS NULL AND lease_days IS NULL)
+            OR (transaction_type = 'lease' AND lease_amount IS NOT NULL AND lease_amount >= 0 AND lease_days IS NOT NULL AND lease_days >= 1)
         ),
+    CONSTRAINT chk_reservations_staged_amounts_valid
+        CHECK (initial_amount >= 0 AND final_amount_due >= 0),
     
     -- Foreign Keys
     CONSTRAINT fk_reservations_item 
@@ -146,7 +168,7 @@ CREATE INDEX idx_reservations_expires_at ON reservations(expires_at);
 
 -- Partial index to ensure only ONE active reservation per item
 -- This enforces exclusivity while allowing history (cancelled/expired/completed)
-CREATE UNIQUE INDEX uq_active_reservations_item ON reservations(item_id) WHERE status IN ('active', 'pending_payment');
+CREATE UNIQUE INDEX uq_active_reservations_item ON reservations(item_id) WHERE status IN ('pending_initial_payment', 'awaiting_seller_confirmation', 'awaiting_final_payment');
 
 -- ============================================================================
 -- NOTIFICATIONS TABLE

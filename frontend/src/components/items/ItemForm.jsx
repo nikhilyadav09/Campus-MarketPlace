@@ -12,7 +12,8 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
         image_url: initialData?.image_url || '',
         original_price: initialData?.original_price || '',
         sell_price: initialData?.sell_price || '',
-        lease_price_per_month: initialData?.lease_price_per_month || '',
+        lease_price_per_day: initialData?.lease_price_per_day || '',
+        max_lease_days: initialData?.max_lease_days || '',
         category_id: initialData?.category_id || '',
         allow_purchase: initialData?.allow_purchase ?? true,
         allow_lease: initialData?.allow_lease ?? false,
@@ -57,9 +58,13 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
             }
         }
         if (formData.allow_lease && priceRanges) {
-            const lp = parseFloat(formData.lease_price_per_month);
+                const lp = parseFloat(formData.lease_price_per_day);
             if (!lp || lp < priceRanges.leaseMin || lp > priceRanges.leaseMax) {
-                newErrors.lease_price_per_month = `Lease rate must be between ₹${priceRanges.leaseMin} and ₹${priceRanges.leaseMax}/month`;
+                newErrors.lease_price_per_day = `Lease rate must be between ₹${priceRanges.leaseMin} and ₹${priceRanges.leaseMax}/day`;
+            }
+            const maxDays = parseInt(formData.max_lease_days, 10);
+            if (!maxDays || maxDays < 1 || maxDays > 365) {
+                newErrors.max_lease_days = 'Max lease days must be between 1 and 365';
             }
         }
         setErrors(newErrors);
@@ -77,10 +82,10 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
                 const op = parseFloat(value);
                 if (op && op > 0) {
                     next.sell_price = Math.round(op * 0.40); // midpoint of 30-50%
-                    next.lease_price_per_month = Math.round(op * 0.055); // midpoint of 3-8%
+                    next.lease_price_per_day = Math.round(op * 0.055); // midpoint of 3-8%
                 } else {
                     next.sell_price = '';
-                    next.lease_price_per_month = '';
+                    next.lease_price_per_day = '';
                 }
             }
 
@@ -143,7 +148,8 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
                 ...formData,
                 original_price: parseFloat(formData.original_price),
                 sell_price: parseFloat(formData.sell_price),
-                lease_price_per_month: formData.allow_lease ? parseFloat(formData.lease_price_per_month) : null,
+                lease_price_per_day: formData.allow_lease ? parseFloat(formData.lease_price_per_day) : null,
+                max_lease_days: formData.allow_lease ? parseInt(formData.max_lease_days, 10) : null,
             });
         }
     };
@@ -318,28 +324,45 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
             {/* Lease Price Slider */}
             {formData.allow_lease && priceRanges && (
                 <div className="form-group slider-group">
-                    <label htmlFor="lease_price_per_month">
-                        Lease Rate/month — <span className="slider-value">₹{Number(formData.lease_price_per_month || 0)}</span>
+                    <label htmlFor="lease_price_per_day">
+                        Lease Rate/day — <span className="slider-value">₹{Number(formData.lease_price_per_day || 0)}</span>
                     </label>
                     <div className="slider-range-labels">
-                        <span>₹{priceRanges.leaseMin}/mo</span>
-                        <span>₹{priceRanges.leaseMax}/mo</span>
+                        <span>₹{priceRanges.leaseMin}/day</span>
+                        <span>₹{priceRanges.leaseMax}/day</span>
                     </div>
                     <input
                         type="range"
-                        id="lease_price_per_month"
-                        name="lease_price_per_month"
+                        id="lease_price_per_day"
+                        name="lease_price_per_day"
                         min={priceRanges.leaseMin}
                         max={priceRanges.leaseMax}
                         step={1}
-                        value={formData.lease_price_per_month || priceRanges.leaseMin}
+                        value={formData.lease_price_per_day || priceRanges.leaseMin}
                         onChange={handleSliderChange}
                         className="price-slider"
                     />
                     <small className="form-helper">
-                        Monthly lease rate: 3%–8% of original price
+                        Daily lease rate: 3%–8% of original price
                     </small>
-                    {errors.lease_price_per_month && <span className="error-message">{errors.lease_price_per_month}</span>}
+                    {errors.lease_price_per_day && <span className="error-message">{errors.lease_price_per_day}</span>}
+                </div>
+            )}
+
+            {formData.allow_lease && (
+                <div className="form-group">
+                    <label htmlFor="max_lease_days">Maximum Lease Days</label>
+                    <input
+                        type="number"
+                        id="max_lease_days"
+                        name="max_lease_days"
+                        min={1}
+                        max={365}
+                        value={formData.max_lease_days}
+                        onChange={handleChange}
+                        placeholder="e.g. 7"
+                    />
+                    {errors.max_lease_days && <span className="error-message">{errors.max_lease_days}</span>}
                 </div>
             )}
 
@@ -350,7 +373,7 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
                     <p><strong>Sell price:</strong> ₹{Number(formData.sell_price || 0)}</p>
                 )}
                 {formData.allow_lease && priceRanges && (
-                    <p><strong>Lease rate:</strong> ₹{Number(formData.lease_price_per_month || 0)}/month</p>
+                    <p><strong>Lease rate:</strong> ₹{Number(formData.lease_price_per_day || 0)}/day</p>
                 )}
                 {!priceRanges && (
                     <p className="text-muted">Enter original price to see pricing options</p>

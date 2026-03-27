@@ -19,10 +19,12 @@ function StatusBadge({ status, type = 'item', clickable = false, onClick }) {
             }
         } else {
             switch (status) {
-                case RESERVATION_STATUS.PENDING_PAYMENT:
-                    return { label: 'Pending Payment', variant: 'reserved' };
-                case RESERVATION_STATUS.ACTIVE:
-                    return { label: 'Active', variant: 'reserved' };
+                case RESERVATION_STATUS.PENDING_INITIAL_PAYMENT:
+                    return { label: 'Initial Payment Pending', variant: 'reserved' };
+                case RESERVATION_STATUS.AWAITING_SELLER_CONFIRMATION:
+                    return { label: 'Awaiting Seller Confirmation', variant: 'reserved' };
+                case RESERVATION_STATUS.AWAITING_FINAL_PAYMENT:
+                    return { label: 'Final Payment Due', variant: 'reserved' };
                 case RESERVATION_STATUS.COMPLETED:
                     return { label: 'Completed', variant: 'available' };
                 case RESERVATION_STATUS.CANCELLED:

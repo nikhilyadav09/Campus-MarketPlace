@@ -3,7 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useItem } from '../hooks/useItems';
-import { getReservations, createReservation, cancelReservation, verifyPayment, confirmReservation } from '../api/reservations';
+import {
+    getReservations,
+    createReservation,
+    cancelReservation,
+    verifyPayment,
+    confirmReservation,
+    createFinalPaymentOrder,
+    verifyFinalPayment,
+} from '../api/reservations';
 import { getPaymentConfig } from '../api/payments';
 import StatusBadge from '../components/common/StatusBadge';
 import Button from '../components/common/Button';
@@ -17,6 +25,7 @@ function ItemDetailPage({ currentUser }) {
     const { item, loading, error, refetch } = useItem(id);
     const [reservation, setReservation] = useState(null);
     const [transactionType, setTransactionType] = useState('purchase');
+    const [leaseDays, setLeaseDays] = useState(1);
     const [actionLoading, setActionLoading] = useState(false);
     const [actionError, setActionError] = useState(null);
 
@@ -30,7 +39,11 @@ function ItemDetailPage({ currentUser }) {
             try {
                 if (item.status === ITEM_STATUS.RESERVED) {
                     const all = await getReservations({ item_id: item.id });
-                    const relevant = all.find(r => [RESERVATION_STATUS.ACTIVE, RESERVATION_STATUS.PENDING_PAYMENT].includes(r.status));
+                    const relevant = all.find(r => [
+                        RESERVATION_STATUS.PENDING_INITIAL_PAYMENT,
+                        RESERVATION_STATUS.AWAITING_SELLER_CONFIRMATION,
+                        RESERVATION_STATUS.AWAITING_FINAL_PAYMENT,
+                    ].includes(r.status));
                     setReservation(relevant || null);
                     return;
                 }
@@ -83,15 +96,15 @@ function ItemDetailPage({ currentUser }) {
         }).format(price);
     };
     const getLeaseAmount = () => {
-        if (!item?.allow_lease || !item?.lease_price_per_month) return null;
-        return Number(item.lease_price_per_month);
+        if (!item?.allow_lease || !item?.lease_price_per_day) return null;
+        return Number(item.lease_price_per_day);
     };
 
     const selectedPrice = (() => {
         const leaseAmount = getLeaseAmount();
         const wantsLease = transactionType === 'lease';
         if (wantsLease && leaseAmount != null) {
-            return { label: 'Lease', amount: leaseAmount, suffix: '/month', key: 'lease' };
+            return { label: 'Lease', amount: leaseAmount * leaseDays, suffix: '', key: 'lease' };
         }
         return { label: 'Buy', amount: item.sell_price, suffix: '', key: 'purchase' };
     })();
@@ -103,62 +116,83 @@ function ItemDetailPage({ currentUser }) {
         setActionLoading(true);
         setActionError(null);
         try {
-            const paymentConfig = await getPaymentConfig();
-            const razorpayKeyId = paymentConfig?.razorpay_key_id || import.meta.env.VITE_RAZORPAY_KEY_ID;
-            if (!razorpayKeyId) {
-                throw new Error('Payment is not configured. Razorpay key is missing.');
-            }
-
-            // 1. Create order
-            const orderRes = await createReservation(item.id, transactionType);
-            
-            // 2. Open Razorpay Checkout
-            const options = {
-                key: razorpayKeyId,
-                amount: orderRes.amount,
-                currency: orderRes.currency,
-                name: 'Campus MarketPlace',
-                description: `Payment for ${item.title}`,
-                order_id: orderRes.razorpay_order_id,
-                handler: async function (response) {
-                    try {
-                        setActionLoading(true);
-                        // 3. Verify payment 
-                        await verifyPayment(orderRes.reservation_id, {
-                            razorpay_payment_id: response.razorpay_payment_id,
-                            razorpay_order_id: response.razorpay_order_id,
-                            razorpay_signature: response.razorpay_signature
-                        });
-                        navigate('/my-reservations');
-                    } catch (verifyErr) {
-                        setActionError(verifyErr.message || 'Payment verification failed');
-                        refetch();
-                    } finally {
-                        setActionLoading(false);
-                    }
-                },
-                prefill: {
-                    name: currentUser.name,
-                    email: currentUser.email,
-                    contact: currentUser.mobile_number || ''
-                },
-                theme: {
-                    color: '#4f46e5'
+            const orderRes = await createReservation(item.id, transactionType, transactionType === 'lease' ? leaseDays : null);
+            await openCheckout(orderRes, `Initial payment for ${item.title}`, async (response) => {
+                try {
+                    setActionLoading(true);
+                    await verifyPayment(orderRes.reservation_id, {
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_signature: response.razorpay_signature
+                    });
+                    navigate('/my-reservations');
+                } catch (verifyErr) {
+                    setActionError(verifyErr.message || 'Payment verification failed');
+                    refetch();
+                } finally {
+                    setActionLoading(false);
                 }
-            };
-            
-            const rzp = new window.Razorpay(options);
-            
-            rzp.on('payment.failed', function (response){
-                setActionError(`Payment failed: ${response.error.description}`);
-                setActionLoading(false);
             });
-            
-            rzp.open();
         } catch (err) {
             setActionError(err.message);
             setActionLoading(false);
             refetch();
+        }
+    };
+
+    const openCheckout = async (orderRes, description, onSuccess) => {
+        const paymentConfig = await getPaymentConfig();
+        const razorpayKeyId = paymentConfig?.razorpay_key_id || import.meta.env.VITE_RAZORPAY_KEY_ID;
+        if (!razorpayKeyId) {
+            throw new Error('Payment is not configured. Razorpay key is missing.');
+        }
+        const options = {
+            key: razorpayKeyId,
+            amount: orderRes.amount,
+            currency: orderRes.currency,
+            name: 'Campus MarketPlace',
+            description,
+            order_id: orderRes.razorpay_order_id,
+            handler: onSuccess,
+            prefill: {
+                name: currentUser.name,
+                email: currentUser.email,
+                contact: currentUser.mobile_number || ''
+            },
+            theme: { color: '#4f46e5' }
+        };
+        const rzp = new window.Razorpay(options);
+        rzp.on('payment.failed', function (response) {
+            setActionError(`Payment failed: ${response.error.description}`);
+            setActionLoading(false);
+        });
+        rzp.open();
+    };
+
+    const handlePayRemaining = async () => {
+        if (!currentUser || !reservation) return;
+        setActionLoading(true);
+        setActionError(null);
+        try {
+            const finalOrder = await createFinalPaymentOrder(reservation.id);
+            await openCheckout(finalOrder, `Final payment for ${item.title}`, async (response) => {
+                try {
+                    await verifyFinalPayment(reservation.id, {
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_signature: response.razorpay_signature
+                    });
+                    setReservation(null);
+                    refetch();
+                } catch (verifyErr) {
+                    setActionError(verifyErr.message || 'Final payment verification failed');
+                } finally {
+                    setActionLoading(false);
+                }
+            });
+        } catch (err) {
+            setActionError(err.message || 'Failed to create final payment order');
+            setActionLoading(false);
         }
     };
 
@@ -218,17 +252,23 @@ function ItemDetailPage({ currentUser }) {
 
         if (item.status === ITEM_STATUS.RESERVED) {
             if (isOwner) {
-                if (reservation?.status === RESERVATION_STATUS.ACTIVE) {
+                if (reservation?.status === RESERVATION_STATUS.AWAITING_SELLER_CONFIRMATION) {
                     return { canAct: true, action: 'confirm-sale' };
                 }
-                if (reservation?.status === RESERVATION_STATUS.PENDING_PAYMENT) {
-                    return { canAct: false, reason: 'Waiting for buyer to verify payment.' };
+                if (reservation?.status === RESERVATION_STATUS.PENDING_INITIAL_PAYMENT) {
+                    return { canAct: false, reason: 'Waiting for buyer to complete initial payment.' };
+                }
+                if (reservation?.status === RESERVATION_STATUS.AWAITING_FINAL_PAYMENT) {
+                    return { canAct: false, reason: 'Waiting for buyer to complete final payment.' };
                 }
                 return { canAct: false, reason: 'Reservation details are not available yet.' };
             }
             if (isBuyer) {
-                if ([RESERVATION_STATUS.ACTIVE, RESERVATION_STATUS.PENDING_PAYMENT].includes(reservation?.status)) {
+                if ([RESERVATION_STATUS.PENDING_INITIAL_PAYMENT, RESERVATION_STATUS.AWAITING_SELLER_CONFIRMATION].includes(reservation?.status)) {
                     return { canAct: true, action: 'cancel' };
+                }
+                if (reservation?.status === RESERVATION_STATUS.AWAITING_FINAL_PAYMENT) {
+                    return { canAct: true, action: 'pay-final' };
                 }
                 return { canAct: false, reason: 'Your reservation cannot be cancelled right now.' };
             }
@@ -256,9 +296,9 @@ function ItemDetailPage({ currentUser }) {
                     {selectedPrice.label}: {formatPrice(selectedPrice.amount)}
                     {selectedPrice.suffix}
                 </div>
-                {item.allow_lease && item.lease_price_per_month && transactionType !== 'lease' && (
+                {item.allow_lease && item.lease_price_per_day && transactionType !== 'lease' && (
                     <p className="lease-price-note">
-                        Or lease for {formatPrice(getLeaseAmount())}/month
+                        Or lease for {formatPrice(getLeaseAmount())}/day
                     </p>
                 )}
                 {item.status === ITEM_STATUS.SOLD && item.deal_amount && (
@@ -300,14 +340,16 @@ function ItemDetailPage({ currentUser }) {
                                 <div className="message-icon">⏳</div>
                                 <div className="message-content">
                                     <strong>
-                                        {reservation.status === RESERVATION_STATUS.PENDING_PAYMENT
-                                            ? 'Payment pending'
+                                        {reservation.status === RESERVATION_STATUS.PENDING_INITIAL_PAYMENT
+                                            ? 'Initial payment pending'
                                             : 'Reserved by you'}
                                     </strong>
                                     <p>
-                                        {reservation.status === RESERVATION_STATUS.PENDING_PAYMENT
-                                            ? 'Complete payment verification to notify the seller. You can cancel anytime.'
-                                            : 'Waiting for seller confirmation. You can cancel if needed.'}
+                                        {reservation.status === RESERVATION_STATUS.PENDING_INITIAL_PAYMENT
+                                            ? 'Complete initial payment verification to notify the seller. You can cancel anytime.'
+                                            : reservation.status === RESERVATION_STATUS.AWAITING_FINAL_PAYMENT
+                                                ? 'Seller confirmed. Complete final payment to finish order.'
+                                                : 'Waiting for seller confirmation. You can cancel if needed.'}
                                     </p>
                                 </div>
                             </div>
@@ -396,9 +438,23 @@ function ItemDetailPage({ currentUser }) {
                             >
                                 <span className="toggle-main">Lease</span>
                                 <span className="toggle-sub">
-                                    {getLeaseAmount() != null ? `₹${Number(getLeaseAmount()).toFixed(2)}/month` : 'Set price'}
+                                    {getLeaseAmount() != null ? `₹${Number(getLeaseAmount()).toFixed(2)}/day` : 'Set price'}
                                 </span>
                             </button>
+                        </div>
+                    )}
+                    {item.status === ITEM_STATUS.AVAILABLE && !isOwner && transactionType === 'lease' && (
+                        <div className="form-group">
+                            <label htmlFor="leaseDays">Lease days (max {item.max_lease_days || 1})</label>
+                            <input
+                                id="leaseDays"
+                                type="number"
+                                min={1}
+                                max={item.max_lease_days || 1}
+                                value={leaseDays}
+                                onChange={(e) => setLeaseDays(Math.max(1, Math.min(Number(e.target.value) || 1, item.max_lease_days || 1)))}
+                            />
+                            <small>Pay 1 day now, remaining after seller confirmation.</small>
                         </div>
                     )}
                     {actionState.canAct ? (
@@ -426,6 +482,11 @@ function ItemDetailPage({ currentUser }) {
                             {actionState.action === 'cancel' && (
                                 <Button variant="danger" size="large" onClick={handleCancel} loading={actionLoading}>
                                     Cancel My Reservation
+                                </Button>
+                            )}
+                            {actionState.action === 'pay-final' && (
+                                <Button variant="primary" size="large" onClick={handlePayRemaining} loading={actionLoading}>
+                                    Pay Remaining Amount
                                 </Button>
                             )}
                         </>

@@ -165,9 +165,9 @@ function ItemCard({ item, currentUser, onStatusClick }) {
                         )}
                     </span>
                 </div>
-                {item.allow_lease && item.lease_price_per_month && (
+                {item.allow_lease && item.lease_price_per_day && (
                     <div className="item-lease-price">
-                        Lease ₹{Number(item.lease_price_per_month).toFixed(2)}/mo
+                        Lease ₹{Number(item.lease_price_per_day).toFixed(2)}/day
                     </div>
                 )}
                 {isOwner && item.status === ITEM_STATUS.SOLD && item.deal_amount && (
