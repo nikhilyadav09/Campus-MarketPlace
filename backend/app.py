@@ -450,5 +450,29 @@ def payments_config_endpoint(current_user):
     return jsonify({'razorpay_key_id': key_id}), 200
 
 
+@app.route('/stats', methods=['GET'])
+def market_stats():
+    from db import get_db
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT count(*) as count FROM items")
+            items_count = cur.fetchone()['count']
+            
+            cur.execute("SELECT count(*) as count FROM users")
+            users_count = cur.fetchone()['count']
+            
+            cur.execute("SELECT count(*) as count FROM items WHERE status = 'sold'")
+            trades_count = cur.fetchone()['count']
+            
+            return jsonify({
+                'products': items_count,
+                'students': users_count,
+                'trades': trades_count
+            })
+    except Exception as exc:
+        return jsonify({'error': str(exc)}), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)

@@ -100,9 +100,14 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+    .footer {
+        padding: 24px 0 16px 0;
+    }
+
     .footer-content {
         grid-template-columns: 1fr;
-        gap: var(--spacing-xl);
+        gap: 16px;
+        padding-bottom: 16px;
     }
 
     .footer-brand {
@@ -113,6 +118,7 @@
     .footer-links {
         justify-items: center;
         text-align: center;
+        gap: 16px;
     }
 
     .footer-bottom {

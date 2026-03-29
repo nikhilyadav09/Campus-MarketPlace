@@ -375,15 +375,54 @@
 /* Responsive adjustments */
 @media (max-width: 640px) {
     .item-card-content {
-        padding: 12px 14px 14px;
+        padding: 10px;
     }
 
     .item-title {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+        line-height: 1.2;
     }
 
-    .item-price {
+    .item-description {
+        font-size: 0.70rem;
+        margin-bottom: 8px;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+    }
+
+    .price-main .price-value {
         font-size: 1.1rem;
+    }
+    
+    .price-sub .price-value {
+        font-size: 0.85rem;
+    }
+    
+    .price-label {
+        font-size: 9px;
+        flex: 0 0 45px;
+    }
+    
+    .item-category {
+        font-size: 9px;
+        padding: 4px 8px;
+        margin-bottom: 8px;
+    }
+    
+    .item-card-deal-footer {
+        padding: 6px;
+    }
+    
+    .deal-label, .deal-value {
+        font-size: 10px;
+    }
+
+    .item-card-badge {
+        transform: scale(0.65);
+        transform-origin: top right;
+        top: 6px;
+        right: 6px;
     }
 }
 

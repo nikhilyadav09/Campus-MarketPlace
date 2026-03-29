@@ -772,6 +772,26 @@
 
     .categories-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .category-card {
+        flex-direction: column !important;
+        justify-content: center;
+        padding: 14px 8px;
+        gap: 8px;
+        text-align: center;
+    }
+
+    .category-icon {
+        font-size: 1.8rem;
+        margin: 0;
+    }
+
+    .category-name {
+        font-size: 0.75rem;
+        text-align: center;
+        margin: 0;
     }
 
     .featured-grid {
@@ -853,10 +873,14 @@
         padding: 0;
     }
 
-    .features-grid,
-    .categories-grid {
+    .features-grid {
         grid-template-columns: 1fr;
         gap: 1rem;
+    }
+
+    .categories-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
     }
 
     .feature-card {

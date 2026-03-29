@@ -36,3 +36,7 @@ export function deleteItem(itemId) {
 export function markItemSold(itemId) {
     return post(`/items/${itemId}/sold`, {});
 }
+
+export function getMarketStats() {
+    return get('/stats');
+}

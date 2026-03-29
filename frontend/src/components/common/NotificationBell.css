@@ -123,3 +123,16 @@
     text-align: center;
 }
 
+@media (max-width: 640px) {
+    .notif-dropdown {
+        position: fixed;
+        top: 78px;
+        left: 12px;
+        right: 12px;
+        width: auto;
+        max-width: none;
+        z-index: 1000;
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.26);
+    }
+}
+

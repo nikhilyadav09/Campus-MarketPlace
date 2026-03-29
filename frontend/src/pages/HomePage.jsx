@@ -3,7 +3,7 @@
 
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { getItems, getRecentlyListed } from '../api/items';
+import { getItems, getRecentlyListed, getMarketStats } from '../api/items';
 import { getUsers } from '../api/users';
 import { getReservations } from '../api/reservations';
 import { getCategories } from '../api/categories';
@@ -55,18 +55,14 @@ function HomePage({ categories: propCategories }) {
 
         const loadHeroStats = async () => {
             try {
-                const [items, users, completedReservations] = await Promise.all([
-                    getItems(),
-                    getUsers(),
-                    getReservations({ status: 'completed' })
-                ]);
+                const stats = await getMarketStats();
 
                 if (!isMounted) return;
 
                 setHeroStats({
-                    products: formatHeroStat(items?.length ?? 0),
-                    students: formatHeroStat(users?.length ?? 0),
-                    trades: formatHeroStat(completedReservations?.length ?? 0)
+                    products: formatHeroStat(stats?.products ?? 0),
+                    students: formatHeroStat(stats?.students ?? 0),
+                    trades: formatHeroStat(stats?.trades ?? 0)
                 });
             } catch (error) {
                 if (isMounted) {
