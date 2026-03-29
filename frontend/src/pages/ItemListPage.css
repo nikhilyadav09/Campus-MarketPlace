@@ -242,10 +242,25 @@
 .result-summary {
     font-size: 14px;
     color: var(--text-secondary);
+    background: #ffffff;
+    padding: 8px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(139, 92, 246, 0.12);
+    width: fit-content;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.result-summary strong {
+    color: #2563eb;
+    font-weight: 700;
 }
 
 .result-query {
     color: var(--text-primary);
+    font-weight: 600;
 }
 
 /* Responsive adjustments */
@@ -348,6 +363,9 @@
     }
 
     .result-summary {
-        font-size: 13px;
+        font-size: 12px;
+        padding: 6px 12px;
+        width: 100%;
+        justify-content: center;
     }
 }

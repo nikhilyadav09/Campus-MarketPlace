@@ -7,9 +7,6 @@ import shutil
 import signal
 from pathlib import Path
 from threading import Thread
-import socket
-import urllib.request
-import urllib.error
 
 # =============================================================================
 # CONFIGURATION
@@ -80,47 +77,6 @@ def check_postgres():
 
     log("⚠️  Create sure PostgreSQL is running!", Colors.WARNING)
     return True # Don't block startup, just warn
-
-def kill_processes_on_port(port):
-    """Kill any process listening on the given port."""
-    log(f"Cleaning up port {port}...", Colors.CYAN)
-    system = platform.system().lower()
-    try:
-        if system == 'windows':
-            # Use netstat to find PID
-            cmd = f"netstat -ano | findstr :{port}"
-            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-            for line in result.stdout.strip().split('\n'):
-                if 'LISTENING' in line:
-                    parts = line.split()
-                    pid = parts[-1]
-                    subprocess.run(f"taskkill /F /PID {pid}", shell=True, capture_output=True)
-        else:
-            # Use lsof on Linux/macOS
-            cmd = f"lsof -t -i :{port}"
-            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-            pids = result.stdout.strip().split('\n')
-            for pid in pids:
-                if pid:
-                    subprocess.run(f"kill -9 {pid}", shell=True, capture_output=True)
-    except Exception as e:
-        log(f"Port cleanup failed for {port}: {e}", Colors.WARNING)
-
-def wait_for_backend(url, timeout=30):
-    """Wait for backend to be healthy."""
-    log(f"Waiting for backend to be healthy at {url}...", Colors.CYAN)
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        try:
-            with urllib.request.urlopen(url, timeout=2) as response:
-                if response.status == 200:
-                    log("✅ Backend is healthy!", Colors.GREEN)
-                    return True
-        except (urllib.error.URLError, ConnectionResetError, socket.timeout):
-            pass
-        time.sleep(1)
-    error(f"Backend did not become healthy within {timeout}s")
-    return False
 
 # =============================================================================
 # PROCESS MANAGEMENT
@@ -320,18 +276,11 @@ def main():
 
     # 4. Start Processes
     try:
-        # Cleanup existing processes
-        kill_processes_on_port(8000)
-        kill_processes_on_port(5173)
-        kill_processes_on_port(5174)
-
         backend_proc = run_backend()
         processes.append(backend_proc)
         
-        # Wait for backend to be healthy before starting frontend
-        if not wait_for_backend("http://localhost:8000/auth/me"):
-            cleanup(None, None)
-            return
+        # Give backend a moment to initialize
+        time.sleep(2)
         
         frontend_proc = run_frontend()
         processes.append(frontend_proc)

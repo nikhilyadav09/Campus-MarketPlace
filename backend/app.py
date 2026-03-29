@@ -22,7 +22,7 @@ from services.categories import get_category, list_categories
 from services.items import create_item, get_item, get_recently_listed, list_items
 from services.reservations import (
     cancel_reservation,
-    confirm_reservation,
+     confirm_reservation,
     create_final_payment_order,
     list_reservations,
     reserve_item,

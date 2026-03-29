@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getNotifications, getUnreadNotificationCount, markNotificationRead } from '../../api/notifications';
 import './NotificationBell.css';
@@ -9,6 +9,7 @@ function NotificationBell({ currentUser }) {
     const [unreadCount, setUnreadCount] = useState(0);
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(false);
+    const wrapperRef = useRef(null);
 
     const load = async () => {
         if (!currentUser) return;
@@ -35,6 +36,17 @@ function NotificationBell({ currentUser }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentUser?.id]);
 
+    // Close dropdown when clicking outside the component
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     const handleClickNotification = async (n) => {
         try {
             await markNotificationRead(n.id);
@@ -52,7 +64,7 @@ function NotificationBell({ currentUser }) {
     if (!currentUser) return null;
 
     return (
-        <div className="notif-bell-wrap">
+        <div className="notif-bell-wrap" ref={wrapperRef}>
             <button
                 type="button"
                 className={`notif-bell ${isOpen ? 'open' : ''}`}

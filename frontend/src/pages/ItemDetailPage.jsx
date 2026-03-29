@@ -1,7 +1,7 @@
 // ItemDetailPage - Clear item details with unambiguous state
 
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useItem } from '../hooks/useItems';
 import {
     getReservations,
@@ -19,15 +19,64 @@ import ReservationTimer from '../components/reservations/ReservationTimer';
 import { ITEM_STATUS, RESERVATION_STATUS } from '../constants/status';
 import './ItemDetailPage.css';
 
+import electronicsImg from '../assets/category-electronics.png';
+import booksImg from '../assets/category-books.png';
+import accessoriesImg from '../assets/category-accessories.png';
+import furnitureImg from '../assets/category-furniture.png';
+import sportsImg from '../assets/category-sports.png';
+import clothingImg from '../assets/category-clothing.png';
+import otherImg from '../assets/category-other.png';
+
+function getCategoryDefaultImage(categoryName) {
+    const map = {
+        Electronics: electronicsImg,
+        Books: booksImg,
+        Accessories: accessoriesImg,
+        Furniture: furnitureImg,
+        Sports: sportsImg,
+        Clothing: clothingImg,
+        Other: otherImg,
+    };
+    return map[categoryName] || null;
+}
+
+function sellerInitials(name) {
+    if (!name || !name.trim()) return '?';
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+}
+
 function ItemDetailPage({ currentUser }) {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const { item, loading, error, refetch } = useItem(id);
+    
+    // Determine the path to return to from state or default to /items
+    const backPath = location.state?.from || '/items';
     const [reservation, setReservation] = useState(null);
     const [transactionType, setTransactionType] = useState('purchase');
     const [leaseDays, setLeaseDays] = useState(1);
     const [actionLoading, setActionLoading] = useState(false);
     const [actionError, setActionError] = useState(null);
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [detailImageFailed, setDetailImageFailed] = useState(false);
+
+    useEffect(() => {
+        if (!lightboxOpen) return;
+        const onKey = (e) => {
+            if (e.key === 'Escape') setLightboxOpen(false);
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [lightboxOpen]);
+
+    useEffect(() => {
+        setDetailImageFailed(false);
+    }, [item?.id]);
 
     useEffect(() => {
         const syncReservation = async () => {
@@ -72,7 +121,7 @@ function ItemDetailPage({ currentUser }) {
         return (
             <div className="page-message page-error">
                 <p>Error: {error}</p>
-                <Link to="/items">Back to items</Link>
+                <Link to={backPath}>Back to items</Link>
             </div>
         );
     }
@@ -81,7 +130,7 @@ function ItemDetailPage({ currentUser }) {
         return (
             <div className="page-message">
                 <p>Item not found</p>
-                <Link to="/items">Back to items</Link>
+                <Link to={backPath}>Back to items</Link>
             </div>
         );
     }
@@ -280,22 +329,63 @@ function ItemDetailPage({ currentUser }) {
 
     const actionState = getActionState();
 
+    const categoryDefaultImg = getCategoryDefaultImage(item.category_name);
+    const hasUploadedImage = item.image_url && String(item.image_url).trim() !== '' && !detailImageFailed;
+    const detailImageSrc = hasUploadedImage ? item.image_url : categoryDefaultImg;
+
     return (
         <div className="item-detail-page">
-            <Link to="/my-items" className="back-link">← Back to items</Link>
+            <Link to={backPath} className="back-link">← Back to items</Link>
 
-            <div className="item-detail-card">
-                <div className="item-detail-header">
-                    <StatusBadge status={item.status} type="item" />
-                    {isOwner && <span className="owner-label">Your listing</span>}
+            <div className="item-detail-layout">
+                <div className="item-detail-media-col">
+                    {detailImageSrc ? (
+                        <button
+                            type="button"
+                            className="item-detail-image-frame"
+                            onClick={() => setLightboxOpen(true)}
+                            aria-label={`View ${item.title} full size`}
+                        >
+                            <img
+                                src={detailImageSrc}
+                                alt=""
+                                className="item-detail-image"
+                                onError={() => setDetailImageFailed(true)}
+                            />
+                        </button>
+                    ) : (
+                        <div className="item-detail-image-frame item-detail-image-frame--placeholder" aria-hidden>
+                            <span className="item-detail-image-placeholder-text">{item.title}</span>
+                        </div>
+                    )}
                 </div>
 
-                <h1 className="item-detail-title">{item.title}</h1>
+                <div className="item-detail-card">
+                    <div className="item-detail-header">
+                        <StatusBadge status={item.status} type="item" />
+                        {isOwner && <span className="owner-label">Your listing</span>}
+                    </div>
 
-                <div className="item-detail-price">
-                    {selectedPrice.label}: {formatPrice(selectedPrice.amount)}
-                    {selectedPrice.suffix}
-                </div>
+                    <h1 className="item-detail-title">{item.title}</h1>
+                    {item.category_name && (
+                        <span className="item-detail-category-pill">{item.category_name}</span>
+                    )}
+
+                    {item.seller_name && (
+                        <div className="item-detail-seller">
+                            <span className="item-detail-seller-avatar" aria-hidden>
+                                {sellerInitials(item.seller_name)}
+                            </span>
+                            <p className="item-detail-seller-line">
+                                Listed by <strong>{item.seller_name}</strong>
+                            </p>
+                        </div>
+                    ) }
+
+                    <div className="item-detail-price-block">
+                        <span className="item-detail-price-amount">{formatPrice(selectedPrice.amount)}</span>
+                        <span className="item-detail-price-type">{selectedPrice.label}</span>
+                    </div>
                 {item.allow_lease && item.lease_price_per_day && transactionType !== 'lease' && (
                     <p className="lease-price-note">
                         Or lease for {formatPrice(getLeaseAmount())}/day
@@ -374,7 +464,7 @@ function ItemDetailPage({ currentUser }) {
                     </div>
                 )}
                 {/* Show buyer contact info to seller when their item is reserved */}
-                {isOwner && reservation && (
+                {isOwner && reservation && item.status !== ITEM_STATUS.SOLD && (
                     <div className="contact-info-card">
                         <h4>📞 Buyer Contact</h4>
                         <div className="contact-details">
@@ -460,9 +550,31 @@ function ItemDetailPage({ currentUser }) {
                     {actionState.canAct ? (
                         <>
                             {actionState.action === 'reserve' && (
-                                <Button variant="primary" size="large" onClick={handleReserve} loading={actionLoading}>
-                                    {transactionType === 'lease' ? 'Reserve for Lease' : 'Reserve to Buy'}
-                                </Button>
+                                <div className="item-detail-cta-row">
+                                    <Button
+                                        variant="primary"
+                                        size="large"
+                                        onClick={handleReserve}
+                                        loading={actionLoading}
+                                        className="item-detail-btn-gradient"
+                                    >
+                                        {transactionType === 'lease' ? 'Reserve for Lease' : 'Reserve to Buy'}
+                                    </Button>
+                                    {(item.seller_email || item.seller_mobile) && (
+                                        <a
+                                            href={
+                                                item.seller_email
+                                                    ? `mailto:${encodeURIComponent(item.seller_email)}`
+                                                    : `tel:${String(item.seller_mobile).replace(/\s/g, '')}`
+                                            }
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="item-detail-btn-outline"
+                                        >
+                                            Contact Seller
+                                        </a>
+                                    )}
+                                </div>
                             )}
                             {actionState.action === 'confirm-sale' && (
                                 <div className="action-group">
@@ -503,6 +615,35 @@ function ItemDetailPage({ currentUser }) {
                     )}
                 </div>
             </div>
+            </div>
+
+            {lightboxOpen && detailImageSrc && (
+                <div
+                    className="item-detail-lightbox"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Full size image"
+                    onClick={() => setLightboxOpen(false)}
+                >
+                    <button
+                        type="button"
+                        className="item-detail-lightbox-close"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setLightboxOpen(false);
+                        }}
+                        aria-label="Close"
+                    >
+                        ×
+                    </button>
+                    <img
+                        src={detailImageSrc}
+                        alt=""
+                        className="item-detail-lightbox-img"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            )}
         </div >
     );
 }

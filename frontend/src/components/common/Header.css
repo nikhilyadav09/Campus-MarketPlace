@@ -1,5 +1,28 @@
 /* Header - Bold, Vibrant, Eye-catching */
 
+@keyframes a2n-orbit {
+  to { transform: rotate(360deg); }
+}
+@keyframes a2n-orbit-reverse {
+  to { transform: rotate(-360deg); }
+}
+@keyframes a2n-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.logo-ring1 {
+  animation: a2n-orbit 3.5s linear infinite;
+  transform-origin: 26px 26px;
+}
+.logo-ring2 {
+  animation: a2n-orbit-reverse 6s linear infinite;
+  transform-origin: 26px 26px;
+}
+.logo-glow-dot {
+  animation: a2n-glow 1.8s ease-in-out infinite;
+}
+
 .header {
   background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #7c3aed 100%);
   border-bottom: none;
@@ -17,42 +40,79 @@
   padding: var(--spacing-md) var(--spacing-xl);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-xl);
+  justify-content: space-between; 
+  gap: var(--spacing-md);         
 }
 
 /* Logo - Vibrant Branding */
 .logo {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  font-weight: 700;
+  flex-shrink: 0;                 
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 0;
   transition: transform 0.2s ease;
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(4px);
+  margin-right: 0;  
 }
 
-.logo:hover {
-  transform: scale(1.03);
-  background: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+.logo:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 4px;
 }
 
-.logo-icon {
-  font-size: 1.5rem;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+.logo-text-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  text-decoration: none;
 }
 
-.logo-text {
-  font-size: var(--font-size-lg);
-  background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 50%, #a5f3fc 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.02em;
+.logo-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+
+
+.logo:hover .logo-circle {
+  box-shadow:
+    0 0 0 2.5px #c4b5fd,
+    0 0 18px rgba(167, 139, 250, 1),
+    0 0 40px rgba(96, 165, 250, 0.6);
+  transform: scale(1.08);
+}
+
+
+.logo-text-block {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+  gap: 3px;
+}
+
+.logo-campus {
+  font-size: 16px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 3px;
+}
+
+.logo-marketplace {
+  font-size: 8px;
+  font-weight: 500;
+  color: #a78bfa;
+  letter-spacing: 3.5px;
 }
 
 /* Navigation */
@@ -77,6 +137,7 @@
   font-weight: 500;
   transition: all 0.2s ease;
   position: relative;
+  white-space: nowrap;
 }
 
 .nav-icon {
@@ -127,18 +188,52 @@
     font-size: var(--font-size-xs);
   }
 
-  .logo {
-    padding: var(--spacing-xs) var(--spacing-sm);
+  .logo-text-wrapper {
+    gap: 8px;
   }
 
-  .logo-text {
-    font-size: var(--font-size-base);
+  .logo-circle {
+    width: 44px;
+    height: 44px;
+  }
+
+  .logo-campus {
+    font-size: 14px;
+    letter-spacing: 2.4px;
+  }
+
+  .logo-marketplace {
+    font-size: 7px;
+    letter-spacing: 3px;
   }
 }
 
 @media (max-width: 600px) {
   .nav-icon {
     display: none;
+  }
+
+  .logo-text-wrapper {
+    gap: 6px;
+  }
+
+  .logo-circle {
+    width: 38px;
+    height: 38px;
+  }
+
+  .logo-a2n {
+    font-size: 14px;
+  }
+
+  .logo-campus {
+    font-size: 12px;
+    letter-spacing: 2px;
+  }
+
+  .logo-marketplace {
+    font-size: 6px;
+    letter-spacing: 2.4px;
   }
 }
 

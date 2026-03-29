@@ -1,6 +1,6 @@
 // ItemCard component - Enhanced with product images and modern styling
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import StatusBadge from '../common/StatusBadge';
 import { ITEM_STATUS } from '../../constants/status';
@@ -17,6 +17,7 @@ import otherImg from '../../assets/category-other.png';
 
 function ItemCard({ item, currentUser, onStatusClick }) {
     const navigate = useNavigate();
+    const location = useLocation();
     const [imageLoadFailed, setImageLoadFailed] = useState(false);
 
     const formatPrice = (price) => {
@@ -59,7 +60,8 @@ function ItemCard({ item, currentUser, onStatusClick }) {
     const shouldShowUploadedImage = item.image_url && item.image_url.trim() !== '' && !imageLoadFailed;
 
     const handleCardClick = () => {
-        navigate(`/items/${item.id}`);
+        // Pass current path (including filters) to the detail page
+        navigate(`/items/${item.id}`, { state: { from: location.pathname + location.search } });
     };
 
     const handleStatusClick = (status) => {
@@ -111,15 +113,27 @@ function ItemCard({ item, currentUser, onStatusClick }) {
                     </div>
                 )}
 
-                {/* Status Badge - Overlay on image */}
-                <div className="item-card-badge">
-                    <StatusBadge
-                        status={item.status}
-                        type="item"
-                        clickable={!!onStatusClick}
-                        onClick={handleStatusClick}
-                    />
-                </div>
+                {/* Status Badge */}
+                {isSold ? (
+                    <div className="item-card-ribbon-sold" aria-hidden>
+                        <span>SOLD</span>
+                    </div>
+                ) : (
+                    <div className="item-card-badge">
+                        <StatusBadge
+                            status={item.status}
+                            type="item"
+                            clickable={!!onStatusClick}
+                            onClick={handleStatusClick}
+                        />
+                    </div>
+                )}
+                {/* Modern You/Owner badge overlay */}
+                {isOwner && (
+                    <div className="item-card-owner-badge" aria-label="Your listing">
+                        You
+                    </div>
+                )}
             </div>
 
             {/* Content Section */}
@@ -132,47 +146,49 @@ function ItemCard({ item, currentUser, onStatusClick }) {
                 )}
 
                 {/* Title */}
+                {/* Title */}
                 <h3 className="item-title">{item.title}</h3>
-                <div className="item-mode-row">
-                    {item.allow_purchase && <span className="item-mode-pill">Buy</span>}
-                    {item.allow_lease && <span className="item-mode-pill item-mode-pill--lease">Lease</span>}
-                </div>
-
-                {/* Buyer Info for Sold/Reserved items (only for seller) */}
+                {item.description && (
+                    <p className="item-description">{item.description}</p>
+                )}
+                {/* Mode tags removed as per user request (redundant with bottom pricing) */}
                 {isOwner && (isSold || item.status === ITEM_STATUS.RESERVED) && item.buyer_name && (
-                    <div className="item-buyer-info">
-                        <div className="buyer-label">👤 {isSold ? 'Sold to' : 'Reserved by'}:</div>
-                        <div className="buyer-details">
-                            <span className="buyer-name">{item.buyer_name}</span>
-                            {item.buyer_mobile && <span className="buyer-contact">📱 {item.buyer_mobile}</span>}
-                            {item.buyer_hostel && item.buyer_room && (
-                                <span className="buyer-contact">🏠 {item.buyer_hostel}, Room {item.buyer_room}</span>
-                            )}
+                    <div className="item-buyer-block">
+                        <div className="buyer-block-header">
+                            <span className="buyer-icon">{isSold ? '🎉' : '⏳'}</span>
+                            <span className="buyer-status-text">{isSold ? 'Sold to' : 'Reserved by'}</span>
+                        </div>
+                        <div className="buyer-block-details">
+                            <strong className="buyer-name">{item.buyer_name}</strong>
+                            <div className="buyer-contact-row">
+                                {item.buyer_mobile && <span className="buyer-contact-item">📱 {item.buyer_mobile}</span>}
+                                {item.buyer_hostel && item.buyer_room && (
+                                    <span className="buyer-contact-item">🏠 {item.buyer_hostel}, R-{item.buyer_room}</span>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
 
-                {/* Price & Seller Footer */}
-                <div className="item-card-footer">
-                    <span className="item-price">
-                        Sell {formatPrice(item.sell_price)}
-                    </span>
-                    <span className="item-seller">
-                        {item.seller_name ? (
-                            isOwner ? 'Your listing' : `by ${item.seller_name}`
-                        ) : (
-                            isOwner && 'Your listing'
-                        )}
-                    </span>
-                </div>
-                {item.allow_lease && item.lease_price_per_day && (
-                    <div className="item-lease-price">
-                        Lease ₹{Number(item.lease_price_per_day).toFixed(2)}/day
+                {/* Unified Pricing Block - Stick to Bottom */}
+                <div className="item-card-pricing">
+                    <div className="price-main">
+                        <span className="price-label">Buy</span>
+                        <span className="price-value">{formatPrice(item.sell_price)}</span>
                     </div>
-                )}
+                    {item.allow_lease && item.lease_price_per_day && (
+                        <div className="price-sub">
+                            <span className="price-label">Lease</span>
+                            <span className="price-value">₹{Number(item.lease_price_per_day).toFixed(0)}/day</span>
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer for Deal info when sold */}
                 {isOwner && item.status === ITEM_STATUS.SOLD && item.deal_amount && (
-                    <div className="item-deal-amount">
-                        Closed at ₹{Number(item.deal_amount).toFixed(2)} ({item.transaction_type === 'lease' ? 'lease' : 'sale'})
+                    <div className="item-card-deal-footer">
+                        <span className="deal-label">Closed deal:</span>
+                        <span className="deal-value">{formatPrice(item.deal_amount)}</span>
                     </div>
                 )}
             </div>

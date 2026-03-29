@@ -1,6 +1,6 @@
 // ItemForm component — Original Price → auto-calculated sell/lease sliders
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import Button from '../common/Button';
 import './ItemForm.css';
 
@@ -21,6 +21,14 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
 
     const [errors, setErrors] = useState({});
     const [uploadingImage, setUploadingImage] = useState(false);
+    const [localPreviewUrl, setLocalPreviewUrl] = useState(null);
+    const fileInputRef = useRef(null);
+
+    useEffect(() => {
+        return () => {
+            if (localPreviewUrl) URL.revokeObjectURL(localPreviewUrl);
+        };
+    }, [localPreviewUrl]);
 
     // Computed price ranges based on original_price
     const priceRanges = useMemo(() => {
@@ -104,41 +112,83 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
         }
     };
 
-    const handleImageUpload = async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+    const uploadImageFile = async (file) => {
+        if (!file || !file.type.startsWith('image/')) return;
 
         setUploadingImage(true);
+        const prevLocal = localPreviewUrl;
+        if (prevLocal) URL.revokeObjectURL(prevLocal);
+        const objectUrl = URL.createObjectURL(file);
+        setLocalPreviewUrl(objectUrl);
+
         const data = new FormData();
         data.append("file", file);
-        
-        // Use environment variables for Cloudinary configuration
-        const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "campus_marketplace"; 
+
+        const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "campus_marketplace";
         const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "demo";
-        
+
         data.append("upload_preset", uploadPreset);
-        
+
         try {
             const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
                 method: "POST",
                 body: data
             });
-            
+
             if (!res.ok) {
                 throw new Error(`Upload failed: ${res.statusText}`);
             }
-            
+
             const uploadedImage = await res.json();
-            
+
             if (uploadedImage.secure_url) {
                 setFormData(prev => ({ ...prev, image_url: uploadedImage.secure_url }));
+                setLocalPreviewUrl((url) => {
+                    if (url) URL.revokeObjectURL(url);
+                    return null;
+                });
             }
         } catch (error) {
             console.error("Upload failed:", error);
             alert("Failed to upload image. Please check your Cloudinary configuration or try again.");
+            setLocalPreviewUrl((url) => {
+                if (url) URL.revokeObjectURL(url);
+                return null;
+            });
         } finally {
             setUploadingImage(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
+    };
+
+    const handleImageInputChange = (e) => {
+        const file = e.target.files?.[0];
+        if (file) uploadImageFile(file);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const file = e.dataTransfer.files?.[0];
+        if (file) uploadImageFile(file);
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const toggleListingMode = (field) => {
+        setFormData((prev) => {
+            const nextVal = !prev[field];
+            const purchase = field === 'allow_purchase' ? nextVal : prev.allow_purchase;
+            const lease = field === 'allow_lease' ? nextVal : prev.allow_lease;
+            if (!purchase && !lease) {
+                return prev;
+            }
+            return { ...prev, [field]: nextVal };
+        });
+        setErrors((prev) => ({ ...prev, listing_mode: '' }));
     };
 
     const handleSubmit = (e) => {
@@ -154,82 +204,110 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
         }
     };
 
+    const displayPreviewSrc = formData.image_url || localPreviewUrl;
+
     return (
         <form className="item-form" onSubmit={handleSubmit}>
-            <div className="form-group">
-                <label htmlFor="title">Title *</label>
-                <input
-                    type="text"
-                    id="title"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleChange}
-                    placeholder="What are you selling?"
-                    className={errors.title ? 'error' : ''}
-                />
-                {errors.title && <span className="error-message">{errors.title}</span>}
-            </div>
-            <div className="form-group">
-                <label htmlFor="description">Description</label>
-                <textarea
-                    id="description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    placeholder="Describe your item..."
-                    rows={4}
-                    className={errors.description ? 'error' : ''}
-                />
-                {errors.description && <span className="error-message">{errors.description}</span>}
-            </div>
+            <section className="item-form-section">
+                <div className="form-group">
+                    <label htmlFor="title">Title *</label>
+                    <input
+                        type="text"
+                        id="title"
+                        name="title"
+                        value={formData.title}
+                        onChange={handleChange}
+                        placeholder="What are you selling?"
+                        className={errors.title ? 'error' : ''}
+                    />
+                    {errors.title && <span className="error-message">{errors.title}</span>}
+                </div>
+                <div className="form-group">
+                    <label htmlFor="description">Description</label>
+                    <textarea
+                        id="description"
+                        name="description"
+                        value={formData.description}
+                        onChange={handleChange}
+                        placeholder="Describe your item..."
+                        rows={4}
+                        className={errors.description ? 'error' : ''}
+                    />
+                    {errors.description && <span className="error-message">{errors.description}</span>}
+                </div>
+            </section>
 
-            <div className="form-group">
-                <label>Product Image (optional)</label>
-                
-                {formData.image_url ? (
-                    <div className="image-preview-container" style={{ marginBottom: '10px' }}>
-                        <img 
-                            src={formData.image_url} 
-                            alt="Product Preview" 
-                            style={{ width: '120px', height: '120px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #ddd', display: 'block', marginBottom: '8px' }} 
-                        />
-                        <Button 
-                            type="button" 
-                            variant="secondary" 
-                            size="small"
-                            onClick={() => setFormData(prev => ({ ...prev, image_url: '' }))}
-                        >
-                            Remove Image
-                        </Button>
-                    </div>
-                ) : (
-                    <div className="file-upload-container">
-                        <input
-                            type="file"
-                            id="image_upload"
-                            accept="image/*"
-                            capture="environment"
-                            onChange={handleImageUpload}
-                            disabled={uploadingImage}
-                            className={`file-input ${uploadingImage ? 'disabled' : ''}`}
-                            style={{ 
-                                padding: '10px', 
-                                border: '1px dashed #ccc', 
-                                borderRadius: '8px', 
-                                width: '100%', 
-                                cursor: uploadingImage ? 'not-allowed' : 'pointer',
-                                opacity: uploadingImage ? 0.6 : 1
-                            }}
-                        />
-                        {uploadingImage && <div className="uploading-text" style={{ marginTop: '8px', color: '#666', fontSize: '14px' }}>Uploading to Cloudinary...</div>}
-                    </div>
-                )}
-                
-                <small className="form-helper">
-                    Take a photo or upload from your device.
-                </small>
-            </div>
+            <section className="item-form-section">
+                <div className="form-group">
+                    <label>Product Image (optional)</label>
 
+                    {displayPreviewSrc ? (
+                        <div className="image-preview-container">
+                            <img
+                                src={displayPreviewSrc}
+                                alt="Product preview"
+                                className="image-preview-thumb"
+                            />
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="small"
+                                onClick={() => {
+                                    setFormData(prev => ({ ...prev, image_url: '' }));
+                                    setLocalPreviewUrl((url) => {
+                                        if (url) URL.revokeObjectURL(url);
+                                        return null;
+                                    });
+                                    if (fileInputRef.current) fileInputRef.current.value = '';
+                                }}
+                                disabled={uploadingImage}
+                            >
+                                Remove Image
+                            </Button>
+                        </div>
+                    ) : (
+                        <>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                id="image_upload"
+                                accept="image/*"
+                                capture="environment"
+                                onChange={handleImageInputChange}
+                                disabled={uploadingImage}
+                                className="item-form-file-input-hidden"
+                                aria-hidden
+                            />
+                            <button
+                                type="button"
+                                className={`item-form-dropzone ${uploadingImage ? 'item-form-dropzone--busy' : ''}`}
+                                onClick={() => !uploadingImage && fileInputRef.current?.click()}
+                                onDrop={handleDrop}
+                                onDragOver={handleDragOver}
+                                disabled={uploadingImage}
+                                aria-label="Upload product image"
+                            >
+                                <span className="item-form-dropzone-icon" aria-hidden>
+                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                        <polyline points="17 8 12 3 7 8" />
+                                        <line x1="12" y1="3" x2="12" y2="15" />
+                                    </svg>
+                                </span>
+                                <span className="item-form-dropzone-text">
+                                    {uploadingImage ? 'Uploading…' : 'Drag & drop or click to upload'}
+                                </span>
+                            </button>
+                        </>
+                    )}
+
+                    <small className="form-helper">
+                        Take a photo or upload from your device.
+                    </small>
+                </div>
+            </section>
+
+            <section className="item-form-section item-form-section--compact">
             <div className="form-row">
                 <div className="form-group">
                     <label htmlFor="category_id">Category *</label>
@@ -269,26 +347,28 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
             </div>
 
             <div className="form-group">
-                <label>Listing type *</label>
-                <div className="listing-mode-options">
-                    <label className="toggle-option">
-                        <input
-                            type="checkbox"
-                            name="allow_purchase"
-                            checked={formData.allow_purchase}
-                            onChange={handleChange}
-                        />
-                        <span>Allow Buy</span>
-                    </label>
-                    <label className="toggle-option">
-                        <input
-                            type="checkbox"
-                            name="allow_lease"
-                            checked={formData.allow_lease}
-                            onChange={handleChange}
-                        />
-                        <span>Allow Lease</span>
-                    </label>
+                <span id="listing-type-label" className="form-group-label-text">Listing type *</span>
+                <div
+                    className="listing-mode-pills"
+                    role="group"
+                    aria-labelledby="listing-type-label"
+                >
+                    <button
+                        type="button"
+                        className={`listing-pill ${formData.allow_purchase ? 'listing-pill--on' : ''}`}
+                        aria-pressed={formData.allow_purchase}
+                        onClick={() => toggleListingMode('allow_purchase')}
+                    >
+                        Allow Buy
+                    </button>
+                    <button
+                        type="button"
+                        className={`listing-pill ${formData.allow_lease ? 'listing-pill--on' : ''}`}
+                        aria-pressed={formData.allow_lease}
+                        onClick={() => toggleListingMode('allow_lease')}
+                    >
+                        Allow Lease
+                    </button>
                 </div>
                 {errors.listing_mode && <span className="error-message">{errors.listing_mode}</span>}
             </div>
@@ -365,6 +445,7 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
                     {errors.max_lease_days && <span className="error-message">{errors.max_lease_days}</span>}
                 </div>
             )}
+            </section>
 
             {/* Price Summary */}
             <div className="price-preview-card">
@@ -376,12 +457,18 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
                     <p><strong>Lease rate:</strong> ₹{Number(formData.lease_price_per_day || 0)}/day</p>
                 )}
                 {!priceRanges && (
-                    <p className="text-muted">Enter original price to see pricing options</p>
+                    <div className="price-preview-placeholder">
+                        <div className="price-preview-skeleton" aria-hidden>
+                            <div className="price-preview-skeleton-line price-preview-skeleton-line--long" />
+                            <div className="price-preview-skeleton-line price-preview-skeleton-line--short" />
+                        </div>
+                        <p className="price-preview-hint text-muted">Enter original price to see pricing options.</p>
+                    </div>
                 )}
             </div>
 
             <div className="form-actions">
-                <Button type="submit" variant="primary" size="large" loading={loading}>
+                <Button type="submit" variant="primary" size="large" loading={loading} className="item-form-submit-btn">
                     {initialData ? 'Update Item' : 'Create Listing'}
                 </Button>
             </div>

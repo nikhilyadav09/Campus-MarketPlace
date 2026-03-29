@@ -3,16 +3,32 @@
 
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { getRecentlyListed } from '../api/items';
+import { getItems, getRecentlyListed } from '../api/items';
+import { getUsers } from '../api/users';
+import { getReservations } from '../api/reservations';
 import { getCategories } from '../api/categories';
 import ItemGrid from '../components/items/ItemGrid';
 import './HomePage.css';
+
+const formatHeroStat = (count) => {
+    const numericCount = Number(count);
+    const safeCount = Number.isFinite(numericCount) ? numericCount : 0;
+    const scaled = Math.max(Math.round(safeCount * 10), 0);
+    return `${scaled.toLocaleString()}+`;
+};
+
+const getEmptyHeroStats = () => ({
+    products: formatHeroStat(0),
+    students: formatHeroStat(0),
+    trades: formatHeroStat(0)
+});
 
 function HomePage({ categories: propCategories }) {
     const [featuredItems, setFeaturedItems] = useState([]);
     const [categories, setCategories] = useState(propCategories || []);
     const [loading, setLoading] = useState(true);
     const [marketStats, setMarketStats] = useState({ buyOnly: 0, leaseOnly: 0, hybrid: 0 });
+    const [heroStats, setHeroStats] = useState(getEmptyHeroStats);
     useEffect(() => {
         // Use passed categories if available, otherwise fetch
         const categoriesPromise = propCategories ? Promise.resolve(propCategories) : getCategories();
@@ -33,6 +49,37 @@ function HomePage({ categories: propCategories }) {
             setLoading(false);
         }).catch(() => setLoading(false));
     }, [propCategories]);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadHeroStats = async () => {
+            try {
+                const [items, users, completedReservations] = await Promise.all([
+                    getItems(),
+                    getUsers(),
+                    getReservations({ status: 'completed' })
+                ]);
+
+                if (!isMounted) return;
+
+                setHeroStats({
+                    products: formatHeroStat(items?.length ?? 0),
+                    students: formatHeroStat(users?.length ?? 0),
+                    trades: formatHeroStat(completedReservations?.length ?? 0)
+                });
+            } catch (error) {
+                if (isMounted) {
+                    setHeroStats(getEmptyHeroStats());
+                }
+            }
+        };
+
+        loadHeroStats();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     const categoryIcons = {
         'Electronics': '💻',
@@ -102,17 +149,17 @@ function HomePage({ categories: propCategories }) {
                     </div>
                     <div className="hero-stats">
                         <div className="stat">
-                            <span className="stat-number">500+</span>
+                            <span className="stat-number">{heroStats.products}</span>
                             <span className="stat-label">Products Added</span>
                         </div>
                         <div className="stat-divider"></div>
                         <div className="stat">
-                            <span className="stat-number">800+</span>
+                            <span className="stat-number">{heroStats.students}</span>
                             <span className="stat-label">Students Connected</span>
                         </div>
                         <div className="stat-divider"></div>
                         <div className="stat">
-                            <span className="stat-number">100+</span>
+                            <span className="stat-number">{heroStats.trades}</span>
                             <span className="stat-label">Successful Trades</span>
                         </div>
                     </div>

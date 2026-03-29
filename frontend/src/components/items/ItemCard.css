@@ -2,31 +2,37 @@
 
 .item-card {
     position: relative;
+    width: 100%;
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
     /* Warm cream/ivory background */
-    background: linear-gradient(145deg, #fffbf5 0%, #fef7ed 100%);
-    border: 2px solid rgba(139, 92, 246, 0.12);
-    border-radius: 16px;
+    background: linear-gradient(160deg, #ffffff 0%, #f9fafb 100%);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-top: 3px solid transparent;
+    border-radius: 20px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    height: 100%; /* Important for grid alignment */
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    /* Stronger shadow for visibility */
+    transition: border-color 0.3s ease, border-top-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, background 0.3s ease;
+    /* Stronger, more refined layered shadow */
     box-shadow:
-        0 4px 6px -1px rgba(0, 0, 0, 0.08),
-        0 2px 4px -1px rgba(0, 0, 0, 0.04),
-        0 0 0 1px rgba(139, 92, 246, 0.05);
+        0 4px 6px -1px rgba(0, 0, 0, 0.05),
+        0 2px 4px -1px rgba(0, 0, 0, 0.03),
+        0 0 0 1px rgba(15, 23, 42, 0.05);
 }
 
 .item-card:hover {
     border-color: #8b5cf6;
-    /* Enhanced hover shadow */
+    border-top-color: #00bcd4;
+    /* Layered premium hover shadow */
     box-shadow:
-        0 20px 25px -5px rgba(139, 92, 246, 0.2),
-        0 10px 10px -5px rgba(139, 92, 246, 0.1),
-        0 0 0 2px rgba(139, 92, 246, 0.15);
-    transform: translateY(-8px);
-    background: linear-gradient(145deg, #ffffff 0%, #fffbf5 100%);
+        0 20px 25px -5px rgba(15, 23, 42, 0.1),
+        0 8px 10px -6px rgba(15, 23, 42, 0.1),
+        0 0 0 1px rgba(139, 92, 246, 0.2);
+    transform: translateY(-10px);
 }
 
 .item-card:focus {
@@ -35,8 +41,8 @@
 }
 
 .item-card-sold {
-    opacity: 0.65;
-    filter: grayscale(0.25);
+    opacity: 0.94;
+    filter: none;
 }
 
 .item-card-sold:hover {
@@ -57,6 +63,11 @@
     height: 100%;
     object-fit: cover;
     transition: transform 0.5s ease;
+}
+
+.item-card-image img {
+    will-change: transform;
+    backface-visibility: hidden;
 }
 
 .item-card:hover .item-card-image img {
@@ -90,6 +101,53 @@
     z-index: 2;
 }
 
+/* Modern Owner/You badge - Top Left of Image */
+.item-card-owner-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+    color: white;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+    z-index: 2;
+}
+
+/* Diagonal sold ribbon */
+.item-card-ribbon-sold {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 108px;
+    height: 108px;
+    overflow: hidden;
+    z-index: 4;
+    pointer-events: none;
+}
+
+.item-card-ribbon-sold span {
+    position: absolute;
+    display: block;
+    width: 150px;
+    padding: 8px 0;
+    top: 22px;
+    right: -36px;
+    transform: rotate(45deg);
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-align: center;
+    text-transform: uppercase;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
+}
+
 /* Content Section */
 .item-card-content {
     padding: 18px 20px 20px;
@@ -109,51 +167,43 @@
     letter-spacing: 0.8px;
     font-weight: 700;
     padding: 5px 12px;
-    background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
-    border-radius: 20px;
-    margin-bottom: 10px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    margin-bottom: 12px;
     width: fit-content;
-    border: 1px solid rgba(139, 92, 246, 0.15);
+    border: 1px solid #e2e8f0;
 }
 
-/* Title */
+/* Title - Prominent Slate */
 .item-title {
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: #1e293b;
-    color: var(--text-primary);
-    margin: 0 0 12px 0;
-    line-height: 1.4;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 8px 0;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: auto;
+}
+
+/* Description - Now darker and more readable */
+.item-description {
+    font-size: 0.875rem;
+    color: #475569; /* Darker than before */
+    line-height: 1.5;
+    margin-bottom: 16px;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
-    /* Standard property for compatibility */
     -webkit-box-orient: vertical;
     overflow: hidden;
-    min-height: 2.8em;
+    min-height: 3em;
 }
 
-.item-mode-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 10px;
-}
-
-.item-mode-pill {
-    font-size: 11px;
-    font-weight: 700;
-    color: #1d4ed8;
-    background: #dbeafe;
-    border-radius: 999px;
-    padding: 4px 10px;
-}
-
-.item-mode-pill--lease {
-    color: #0f766e;
-    background: #ccfbf1;
-}
-
-/* Placeholder Colors */
+/* Redundant tags removed from JSX - Cleaning up CSS */
 .placeholder-text {
     font-size: 2rem;
     font-weight: 700;
@@ -193,48 +243,125 @@
     background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
 }
 
-/* Footer - Price & Seller */
-.item-card-footer {
+/* Buyer Block - Structured & Professional */
+.item-buyer-block {
+    margin-bottom: 20px;
+    padding: 12px;
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 12px;
+}
+
+.buyer-block-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.buyer-status-text {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.buyer-block-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.buyer-name {
+    font-size: 14px;
+    color: #1e293b;
+}
+
+.buyer-contact-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.buyer-contact-item {
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+/* Unified Pricing Section - Stick to Bottom */
+.item-card-pricing {
+    margin-top: auto; /* Pushes everything above it up */
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 16px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.price-main, .price-sub {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: auto;
-    padding-top: 12px;
-    border-top: 2px solid #f1f5f9;
 }
 
-/* Price - Prominent */
-.item-price {
-    font-size: 1.25rem;
+.price-label {
+    font-size: 12px;
     font-weight: 800;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #4f46e5; /* Strong Indigo for BUY */
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    flex: 0 0 70px; /* Consistent width for vertical alignment */
+}
+
+.price-sub .price-label {
+    color: #0d9488; /* Fresh Teal for LEASE */
+}
+
+.price-main .price-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #059669; /* Rich Emerald */
+    letter-spacing: -0.02em;
+}
+
+.price-sub .price-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0d9488; /* Solid Teal */
+}
+
+/* Closed Deal Footer */
+.item-card-deal-footer {
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: #fff7ed;
+    border: 1px solid #ffedd5;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.deal-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #c2410c;
+}
+
+.deal-value {
+    font-size: 13px;
+    font-weight: 700;
+    color: #9a3412;
+}
+
+/* Hover state for price */
+.item-card:hover .item-price {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-}
-
-/* Seller */
-.item-seller {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    font-weight: 500;
-    padding: 4px 8px;
-    background: #f8fafc;
-    border-radius: 6px;
-}
-
-.item-lease-price {
-    margin-top: 8px;
-    font-size: 0.85rem;
-    color: #0f766e;
-    font-weight: 700;
-}
-
-.item-deal-amount {
-    margin-top: 8px;
-    font-size: 0.8rem;
-    color: #7c2d12;
-    font-weight: 600;
 }
 
 /* Hover state for price */

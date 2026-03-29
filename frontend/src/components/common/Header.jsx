@@ -15,9 +15,52 @@ function Header({ currentUser }) {
     return (
         <header className="header">
             <div className="header-container">
-                <Link to="/" className="logo">
-                    <span className="logo-icon">🎓</span>
-                    <span className="logo-text">Campus Marketplace</span>
+                <Link to="/" className="logo" aria-label="Campus Marketplace home">
+                    <div className="logo-text-wrapper">
+                        <div className="logo-circle">
+                        {/* Base layer */}
+                        <svg width="52" height="52" viewBox="0 0 52 52" style={{position:'absolute'}}>
+                            <defs>
+                            <linearGradient id="a2n-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#0d0a2a"/>
+                                <stop offset="100%" stopColor="#1a0533"/>
+                            </linearGradient>
+                            <linearGradient id="a2n-orbit-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#60a5fa" stopOpacity="0"/>
+                                <stop offset="50%" stopColor="#a78bfa"/>
+                                <stop offset="100%" stopColor="#f472b6" stopOpacity="0"/>
+                            </linearGradient>
+                            </defs>
+                            <circle cx="26" cy="26" r="24" fill="url(#a2n-bg)" stroke="rgba(139,92,246,0.3)" strokeWidth="0.5"/>
+                            <circle cx="26" cy="26" r="18" fill="none" stroke="rgba(167,139,250,0.1)" strokeWidth="0.5"/>
+                            {/* A - Georgia italic, blue */}
+                            <text x="9" y="32" fontFamily="Georgia,serif" fontSize="15" fontWeight="700" fontStyle="italic" fill="#38bdf8">A</text>
+                            {/* 2 - Courier mono, white */}
+                            <text x="21.5" y="32" fontFamily="Courier New,monospace" fontSize="15" fontWeight="700" fill="#e2e8f0">2</text>
+                            {/* N - Impact, pink */}
+                            <text x="33" y="32" fontFamily="Impact,sans-serif" fontSize="15" fontWeight="900" fill="#f472b6">N</text>
+                            <line x1="21" y1="16" x2="21" y2="36" stroke="rgba(255,255,255,0.07)" strokeWidth="0.5"/>
+                            <line x1="33" y1="16" x2="33" y2="36" stroke="rgba(255,255,255,0.07)" strokeWidth="0.5"/>
+                        </svg>
+
+                        {/* Clockwise orbit + blue dot */}
+                        <svg width="52" height="52" viewBox="0 0 52 52" style={{position:'absolute'}} className="logo-ring1">
+                            <circle cx="26" cy="26" r="24" fill="none" stroke="url(#a2n-orbit-grad)" strokeWidth="1.8" strokeDasharray="38 112"/>
+                            <circle cx="26" cy="2" r="3.5" fill="#60a5fa" className="logo-glow-dot"/>
+                            <circle cx="26" cy="2" r="1.5" fill="white"/>
+                        </svg>
+
+                        {/* Counter-clockwise dashed + pink dot */}
+                        <svg width="52" height="52" viewBox="0 0 52 52" style={{position:'absolute'}} className="logo-ring2">
+                            <circle cx="26" cy="26" r="20" fill="none" stroke="rgba(236,72,153,0.2)" strokeWidth="0.8" strokeDasharray="4 8"/>
+                            <circle cx="26" cy="6" r="2.2" fill="#ec4899" opacity="0.8"/>
+                        </svg>
+                        </div>
+                        <div className="logo-text-block">
+                            <span className="logo-campus">CAMPUS</span>
+                            <span className="logo-marketplace">MARKETPLACE</span>
+                        </div>
+                    </div>
                 </Link>
 
                 <nav className={`nav ${isMobileNavOpen ? 'open' : ''}`}>

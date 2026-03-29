@@ -239,11 +239,21 @@ def reserve_item(item_id, buyer_id, transaction_type='purchase', lease_days=None
                 per_day = round(float(item['lease_price_per_day']), 2)
                 lease_amount = round(per_day * lease_days_value, 2)
                 initial_amount = per_day
+                if lease_amount < 30.00:
+                    initial_amount = lease_amount
+                elif initial_amount < 1.00:
+                    initial_amount = 1.00
                 final_amount_due = round(max(lease_amount - initial_amount, 0), 2)
             else:
                 sell_price = round(float(item['sell_price']), 2)
-                initial_amount = round(sell_price * PURCHASE_DEPOSIT_PERCENT, 2)
-                final_amount_due = round(sell_price - initial_amount, 2)
+                if sell_price < 30.00:
+                    initial_amount = sell_price
+                    final_amount_due = 0.00
+                else:
+                    initial_amount = round(sell_price * PURCHASE_DEPOSIT_PERCENT, 2)
+                    if initial_amount < 1.00:
+                        initial_amount = 1.00
+                    final_amount_due = round(sell_price - initial_amount, 2)
 
             # Calculate initial payment amount for Razorpay (in paise)
             amount_in_inr = initial_amount
@@ -342,7 +352,8 @@ def confirm_reservation(reservation_id, seller_id):
                     r.buyer_id,
                     i.title,
                     r.lease_amount,
-                    i.sell_price
+                    i.sell_price,
+                    r.final_amount_due
                 FROM reservations r
                 JOIN items i ON r.item_id = i.id
                 WHERE r.id = %s FOR UPDATE
@@ -362,46 +373,94 @@ def confirm_reservation(reservation_id, seller_id):
                 return {'error': 'Reservation is not awaiting seller confirmation'}
 
             item_id = reservation['item_id']
-            cur.execute(
-                """
-                UPDATE reservations
-                SET status = 'awaiting_final_payment'
-                WHERE id = %s
-                """,
-                (reservation_id,),
-            )
-
             transaction_type = reservation["transaction_type"]
-            if transaction_type == "lease":
-                buyer_msg = f"Seller confirmed your lease request for '{reservation['title']}'. Please pay the remaining lease amount."
+            final_amount_due = float(reservation['final_amount_due'] or 0)
+
+            if final_amount_due <= 0:
+                if transaction_type == "lease":
+                    gross_amount = float(reservation['lease_amount'] or 0)
+                    next_item_status = 'available'
+                    notif_type = "reservation_completed_lease"
+                    success_msg = f"Seller confirmed your lease request for '{reservation['title']}'. Full payment was upfront, item is yours!"
+                else:
+                    gross_amount = float(reservation['sell_price'] or 0)
+                    next_item_status = 'sold'
+                    notif_type = "reservation_completed_purchase"
+                    success_msg = f"Seller confirmed your purchase request for '{reservation['title']}'. Full payment was upfront, item is yours!"
+
+                release_percentage = 30.0
+                release_amount = round(gross_amount * (release_percentage / 100.0), 2)
+
+                cur.execute(
+                    """
+                    UPDATE reservations
+                    SET status = 'completed',
+                        final_paid_at = NOW(),
+                        seller_release_percentage = %s,
+                        seller_release_amount = %s,
+                        seller_released_at = NOW()
+                    WHERE id = %s
+                    """,
+                    (release_percentage, release_amount, reservation_id)
+                )
+                cur.execute("UPDATE items SET status = %s, updated_at = NOW() WHERE id = %s", (next_item_status, item_id))
+
+                insert_notification(
+                    cur,
+                    recipient_user_id=reservation["buyer_id"],
+                    sender_user_id=seller_id,
+                    type=notif_type,
+                    message=success_msg,
+                    reservation_id=reservation_id,
+                    item_id=item_id,
+                )
+
+                conn.commit()
+                return {
+                    'status': 'completed',
+                    'item_id': item_id,
+                    'transaction_type': transaction_type,
+                }
             else:
-                buyer_msg = f"Seller confirmed your purchase request for '{reservation['title']}'. Please pay the remaining amount."
+                cur.execute(
+                    """
+                    UPDATE reservations
+                    SET status = 'awaiting_final_payment'
+                    WHERE id = %s
+                    """,
+                    (reservation_id,),
+                )
 
-            insert_notification(
-                cur,
-                recipient_user_id=reservation["buyer_id"],
-                sender_user_id=seller_id,
-                type="reservation_seller_confirmed",
-                message=buyer_msg,
-                reservation_id=reservation_id,
-                item_id=item_id,
-            )
-            insert_notification(
-                cur,
-                recipient_user_id=reservation["buyer_id"],
-                sender_user_id=seller_id,
-                type="reservation_final_payment_due",
-                message=f"Final payment is now due for '{reservation['title']}'.",
-                reservation_id=reservation_id,
-                item_id=item_id,
-            )
+                if transaction_type == "lease":
+                    buyer_msg = f"Seller confirmed your lease request for '{reservation['title']}'. Please pay the remaining lease amount."
+                else:
+                    buyer_msg = f"Seller confirmed your purchase request for '{reservation['title']}'. Please pay the remaining amount."
 
-            conn.commit()
-            return {
-                'status': 'awaiting_final_payment',
-                'item_id': item_id,
-                'transaction_type': reservation['transaction_type'],
-            }
+                insert_notification(
+                    cur,
+                    recipient_user_id=reservation["buyer_id"],
+                    sender_user_id=seller_id,
+                    type="reservation_seller_confirmed",
+                    message=buyer_msg,
+                    reservation_id=reservation_id,
+                    item_id=item_id,
+                )
+                insert_notification(
+                    cur,
+                    recipient_user_id=reservation["buyer_id"],
+                    sender_user_id=seller_id,
+                    type="reservation_final_payment_due",
+                    message=f"Final payment is now due for '{reservation['title']}'.",
+                    reservation_id=reservation_id,
+                    item_id=item_id,
+                )
+
+                conn.commit()
+                return {
+                    'status': 'awaiting_final_payment',
+                    'item_id': item_id,
+                    'transaction_type': transaction_type,
+                }
 
     except Exception as exc:
         conn.rollback()
