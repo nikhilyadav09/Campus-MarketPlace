@@ -16,6 +16,31 @@ def get_db_url():
     return os.environ.get("DATABASE_URL", "postgresql://postgres:Ajay%40123@localhost:5432/campus_marketplace")
 
 
+def ensure_base_schema():
+    """Execute schema.sql to create base tables if they do not exist."""
+    global pool
+    if pool is None:
+        return
+
+    with pool.connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name = 'users'
+                );
+            """)
+            exists = cur.fetchone()['exists']
+            if not exists:
+                import os
+                schema_path = os.path.join(os.path.dirname(__file__), 'schema.sql')
+                if os.path.exists(schema_path):
+                    with open(schema_path, 'r') as f:
+                        cur.execute(f.read())
+        conn.commit()
+
+
 def ensure_auth_columns():
     """Backfill auth-related columns for existing databases."""
     global pool
@@ -196,6 +221,7 @@ def init_db_pool(app):
     global pool
     db_url = get_db_url()
     pool = ConnectionPool(conninfo=db_url, min_size=1, max_size=10, kwargs={"row_factory": psycopg.rows.dict_row})
+    ensure_base_schema()
     ensure_auth_columns()
     ensure_runtime_schema()
 
@@ -222,6 +248,7 @@ def get_db():
         if pool is None:
             db_url = get_db_url()
             pool = ConnectionPool(conninfo=db_url, min_size=1, max_size=10, kwargs={"row_factory": psycopg.rows.dict_row})
+            ensure_base_schema()
             ensure_auth_columns()
             ensure_runtime_schema()
         g.db_conn = pool.getconn()
