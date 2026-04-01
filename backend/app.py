@@ -38,8 +38,8 @@ app = Flask(__name__)
 app.url_map.strict_slashes = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-change-me')
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() == 'true'
+app.config['SESSION_COOKIE_SAMESITE'] = os.environ.get('SESSION_COOKIE_SAMESITE', 'None' if app.config['SESSION_COOKIE_SECURE'] else 'Lax')
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
 CORS(app, supports_credentials=True)
@@ -451,7 +451,7 @@ def payments_config_endpoint(current_user):
 
 
 @app.route('/stats', methods=['GET'])
-def market_stats():
+def market_stats(): 
     from db import get_db
     conn = get_db()
     try:
