@@ -16,7 +16,7 @@ export function getCategory(categoryId) {
 }
 
 export function createCategory(categoryData) {
-    return post('/categories/', categoryData);
+    return post('/categories', categoryData);
 }
 
 export function deleteCategory(categoryId) {

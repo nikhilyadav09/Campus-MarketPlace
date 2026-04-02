@@ -22,7 +22,7 @@ export function getRecentlyListed() {
 }
 
 export function createItem(itemData) {
-    return post('/items/', itemData);
+    return post('/items', itemData);
 }
 
 export function updateItem(itemId, itemData) {

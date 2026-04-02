@@ -3,7 +3,7 @@
 import { get } from './client';
 
 export function getUsers() {
-    return get('/users/');
+    return get('/users');
 }
 
 export function getUser(userId) {
