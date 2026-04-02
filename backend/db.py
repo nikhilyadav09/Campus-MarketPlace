@@ -217,14 +217,7 @@ def ensure_runtime_schema():
 
 
 def init_db_pool(app):
-    """Initialize connection pool."""
-    global pool
-    db_url = get_db_url()
-    pool = ConnectionPool(conninfo=db_url, min_size=1, max_size=10, kwargs={"row_factory": psycopg.rows.dict_row})
-    ensure_base_schema()
-    ensure_auth_columns()
-    ensure_runtime_schema()
-
+    """Initialize connection pool cleanup hook. Pool is lazily initialized in get_db()."""
     @app.teardown_appcontext
     def close_db(error):
         """Close connection at end of request."""
