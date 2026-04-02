@@ -4,7 +4,7 @@ import { get, post, del } from './client';
 
 export function getCategories(parentId = null) {
     const params = parentId ? `?parent_id=${parentId}` : '';
-    return get(`/categories/${params}`);
+    return get(`/categories${params}`);
 }
 
 export function getRootCategories() {

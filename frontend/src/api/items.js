@@ -10,7 +10,7 @@ export function getItems(filters = {}) {
     if (filters.exclude_seller_id) params.append('exclude_seller_id', filters.exclude_seller_id);
 
     const queryString = params.toString();
-    return get(`/items/${queryString ? `?${queryString}` : ''}`);
+    return get(`/items${queryString ? `?${queryString}` : ''}`);
 }
 
 export function getItem(itemId) {

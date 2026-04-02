@@ -9,7 +9,7 @@ export function getReservations(filters = {}) {
     if (filters.status) params.append('status', filters.status);
 
     const queryString = params.toString();
-    return get(`/reservations/${queryString ? `?${queryString}` : ''}`);
+    return get(`/reservations${queryString ? `?${queryString}` : ''}`);
 }
 
 export function getReservation(reservationId) {
