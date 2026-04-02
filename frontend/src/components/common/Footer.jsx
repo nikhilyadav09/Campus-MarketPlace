@@ -32,7 +32,8 @@ function Footer() {
 
                 <div className="footer-bottom">
                     <p className="footer-copyright">
-                        © 2026 Campus Marketplace. Built for students, by students.
+                        © 2026 Campus Marketplace.<br />
+                        Built with ❤️ for students, by students.
                     </p>
                     <div className="footer-badges">
                         <span className="footer-badge">🔒 Secure</span>

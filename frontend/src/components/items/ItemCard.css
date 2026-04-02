@@ -78,19 +78,24 @@
     width: 100%;
     height: 100%;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 8px;
     background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
 }
 
 .placeholder-icon {
-    font-size: 4rem;
-    opacity: 0.7;
-    transition: transform 0.3s ease;
+    font-size: 2.5rem;
+    opacity: 0.5;
 }
 
-.item-card:hover .placeholder-icon {
-    transform: scale(1.15) rotate(5deg);
+.placeholder-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
 
 /* Status Badge - Top Right of Image */
@@ -465,4 +470,78 @@
 .category-indigo {
     background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
     color: #3730a3;
+}
+
+/* ── Delete bar ── */
+.item-card-delete-bar {
+    border-top: 1px solid rgba(220, 38, 38, 0.12);
+    padding: 10px 16px;
+    background: #fff;
+    border-radius: 0 0 20px 20px;
+}
+
+.item-card-delete-btn {
+    width: 100%;
+    padding: 8px 0;
+    background: transparent;
+    border: 1.5px solid #fca5a5;
+    border-radius: 10px;
+    color: #dc2626;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+    letter-spacing: 0.02em;
+}
+
+.item-card-delete-btn:hover {
+    background: #fef2f2;
+    border-color: #dc2626;
+}
+
+.item-card-delete-confirm {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.delete-confirm-text {
+    font-size: 12px;
+    font-weight: 700;
+    color: #7f1d1d;
+    flex: 1;
+}
+
+.delete-confirm-yes {
+    padding: 6px 14px;
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.delete-confirm-yes:hover {
+    opacity: 0.85;
+}
+
+.delete-confirm-no {
+    padding: 6px 14px;
+    background: #f1f5f9;
+    color: #475569;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.delete-confirm-no:hover {
+    background: #e2e8f0;
 }

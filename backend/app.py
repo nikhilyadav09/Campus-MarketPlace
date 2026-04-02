@@ -215,6 +215,17 @@ def get_item_endpoint(item_id):
     return jsonify(item)
 
 
+@app.route('/items/<item_id>', methods=['DELETE'])
+@login_required
+def delete_item_endpoint(current_user, item_id):
+    from services.items import delete_item
+    result = delete_item(item_id, current_user['id'])
+    if 'error' in result:
+        status_code = 404 if result['error'] == 'Item not found' else 403 if result['error'] == 'Not authorized' else 400
+        return jsonify(result), status_code
+    return jsonify(result), 200
+
+
 @app.route('/items/<item_id>/sold', methods=['POST'])
 @login_required
 def mark_item_sold_endpoint(current_user, item_id):
@@ -440,6 +451,14 @@ def notifications_mark_read_endpoint(current_user, notification_id):
     if not ok:
         return jsonify({'error': 'Notification not found'}), 404
     return jsonify({'status': 'read'}), 200
+
+
+@app.route('/notifications/read-all', methods=['POST'])
+@login_required
+def notifications_mark_all_read_endpoint(current_user):
+    from services.notifications import mark_all_notifications_read
+    mark_all_notifications_read(current_user['id'])
+    return jsonify({'status': 'all_read'}), 200
 
 
 @app.route('/payments/config', methods=['GET'])

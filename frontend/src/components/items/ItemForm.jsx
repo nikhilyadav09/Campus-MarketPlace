@@ -47,6 +47,9 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
         if (!formData.title.trim()) {
             newErrors.title = 'Title is required';
         }
+        if (!formData.image_url || formData.image_url.trim() === '') {
+            newErrors.image_url = 'A product photo is required — please upload an image';
+        }
         if (!formData.original_price || parseFloat(formData.original_price) <= 0) {
             newErrors.original_price = 'Original price must be greater than 0';
         }
@@ -239,7 +242,7 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
 
             <section className="item-form-section">
                 <div className="form-group">
-                    <label>Product Image (optional)</label>
+                    <label>Product Image <span style={{color:'#dc2626'}}>*</span></label>
 
                     {displayPreviewSrc ? (
                         <div className="image-preview-container">
@@ -304,6 +307,7 @@ function ItemForm({ categories = [], onSubmit, loading, initialData = null }) {
                     <small className="form-helper">
                         Take a photo or upload from your device.
                     </small>
+                    {errors.image_url && <span className="error-message">{errors.image_url}</span>}
                 </div>
             </section>
 

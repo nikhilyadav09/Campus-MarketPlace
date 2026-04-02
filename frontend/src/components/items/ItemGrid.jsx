@@ -4,7 +4,7 @@
 import ItemCard from './ItemCard';
 import './ItemGrid.css';
 
-function ItemGrid({ items, loading, error, emptyMessage = 'No items found', currentUser, onStatusClick }) {
+function ItemGrid({ items, loading, error, emptyMessage = 'No items found', currentUser, onStatusClick, onDelete }) {
     if (loading) {
         return (
             <div className="item-grid-message">
@@ -37,6 +37,7 @@ function ItemGrid({ items, loading, error, emptyMessage = 'No items found', curr
                     item={item}
                     currentUser={currentUser}
                     onStatusClick={onStatusClick}
+                    onDelete={onDelete}
                 />
             ))}
         </div>

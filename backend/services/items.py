@@ -50,6 +50,23 @@ def list_items(category_id=None, seller_id=None, status=None, exclude_seller_id=
     with get_cursor() as cur:
         cur.execute(query, params)
         return cur.fetchall()
+        
+def delete_item(item_id, user_id):
+    """Delete an item if it belongs to the user."""
+    from db import get_cursor
+    with get_cursor() as cur:
+        # Check ownership and existence
+        cur.execute("SELECT seller_id FROM items WHERE id = %s", (item_id,))
+        item = cur.fetchone()
+        
+        if not item:
+            return {'error': 'Item not found'}
+            
+        if str(item['seller_id']) != str(user_id):
+            return {'error': 'Not authorized'}
+            
+        cur.execute("DELETE FROM items WHERE id = %s", (item_id,))
+        return {'status': 'deleted', 'item_id': item_id}
 
 def create_item(
     seller_id,

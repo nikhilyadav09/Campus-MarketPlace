@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useItems } from '../hooks/useItems';
+import { deleteItem } from '../api/items';
 import ItemGrid from '../components/items/ItemGrid';
 import CategoryFilter from '../components/categories/CategoryFilter';
 import { ITEM_STATUS } from '../constants/status';
@@ -40,7 +41,20 @@ function MyItemsPage({ currentUser, categories = [], categoriesLoading = false }
         ...(currentUser && { seller_id: currentUser.id })
     };
 
-    const { items, loading, error } = useItems(filters);
+    const { items, loading, error, setItems } = useItems(filters);
+
+    const handleDelete = async (itemId) => {
+        const prev = items;
+        // Optimistic removal
+        setItems(current => current.filter(i => i.id !== itemId));
+        try {
+            await deleteItem(itemId);
+        } catch (err) {
+            console.error('Delete failed:', err);
+            setItems(prev); // rollback on error
+            alert('Failed to delete the item. Please try again.');
+        }
+    };
 
     const updateParams = (updates) => {
         const next = new URLSearchParams(searchParams);
@@ -192,6 +206,7 @@ function MyItemsPage({ currentUser, categories = [], categoriesLoading = false }
                 emptyMessage={statusFilter === 'all' ? "You haven't listed any items yet." : "No items match your current filters"}
                 currentUser={currentUser}
                 onStatusClick={handleStatusClick}
+                onDelete={handleDelete}
             />
         </div>
     );

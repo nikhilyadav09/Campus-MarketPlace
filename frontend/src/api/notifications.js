@@ -13,3 +13,7 @@ export function markNotificationRead(notificationId) {
     return post(`/notifications/${notificationId}/read`, {});
 }
 
+export function markAllNotificationsRead() {
+    return post('/notifications/read-all', {});
+}
+

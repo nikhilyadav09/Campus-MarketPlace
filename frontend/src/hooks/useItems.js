@@ -30,7 +30,7 @@ export function useItems(filters = {}) {
         fetchItems();
     }, [fetchItems]);
 
-    return { items, loading, error, refetch: fetchItems };
+    return { items, setItems, loading, error, refetch: fetchItems };
 }
 
 export function useItem(itemId) {

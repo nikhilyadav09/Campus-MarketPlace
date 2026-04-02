@@ -116,3 +116,20 @@ def mark_notification_read(notification_id, user_id):
     conn.commit()
     return row is not None
 
+
+def mark_all_notifications_read(user_id):
+    """Mark all unread notifications for a user as read."""
+    conn = get_db()
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE notifications
+            SET is_read = TRUE,
+                read_at = NOW()
+            WHERE recipient_user_id = %s AND is_read = FALSE
+            """,
+            (user_id,),
+        )
+    conn.commit()
+    return True
+

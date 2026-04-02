@@ -6,19 +6,11 @@ import StatusBadge from '../common/StatusBadge';
 import { ITEM_STATUS } from '../../constants/status';
 import './ItemCard.css';
 
-// Import category default images
-import electronicsImg from '../../assets/category-electronics.png';
-import booksImg from '../../assets/category-books.png';
-import accessoriesImg from '../../assets/category-accessories.png';
-import furnitureImg from '../../assets/category-furniture.png';
-import sportsImg from '../../assets/category-sports.png';
-import clothingImg from '../../assets/category-clothing.png';
-import otherImg from '../../assets/category-other.png';
-
-function ItemCard({ item, currentUser, onStatusClick }) {
+function ItemCard({ item, currentUser, onStatusClick, onDelete }) {
     const navigate = useNavigate();
     const location = useLocation();
     const [imageLoadFailed, setImageLoadFailed] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(false);
 
     const formatPrice = (price) => {
         return new Intl.NumberFormat('en-IN', {
@@ -39,20 +31,6 @@ function ItemCard({ item, currentUser, onStatusClick }) {
             'Other': 'slate'
         };
         return colors[categoryName] || 'indigo';
-    };
-
-    // Get default image for category
-    const getCategoryDefaultImage = (categoryName) => {
-        const categoryImages = {
-            'Electronics': electronicsImg,
-            'Books': booksImg,
-            'Accessories': accessoriesImg,
-            'Furniture': furnitureImg,
-            'Sports': sportsImg,
-            'Clothing': clothingImg,
-            'Other': otherImg,
-        };
-        return categoryImages[categoryName] || null;
     };
 
     const isSold = item.status === ITEM_STATUS.SOLD;
@@ -88,7 +66,6 @@ function ItemCard({ item, currentUser, onStatusClick }) {
         >
             {/* Image Section */}
             <div className="item-card-image">
-                {/* Check for valid image_url (not null, not empty string, not whitespace) */}
                 {shouldShowUploadedImage ? (
                     <img
                         src={item.image_url}
@@ -97,19 +74,10 @@ function ItemCard({ item, currentUser, onStatusClick }) {
                         decoding="async"
                         onError={() => setImageLoadFailed(true)}
                     />
-                ) : getCategoryDefaultImage(item.category_name) ? (
-                    <img
-                        src={getCategoryDefaultImage(item.category_name)}
-                        alt={`${item.category_name} item`}
-                        className="category-default-img"
-                        loading="lazy"
-                        decoding="async"
-                    />
                 ) : (
-                    <div className={`item-card-placeholder placeholder-${getCategoryColor(item.category_name)}`}>
-                        <span className="placeholder-text">
-                            {item.title.length > 10 ? item.title.substring(0, 10) + '..' : item.title}
-                        </span>
+                    <div className="item-card-placeholder">
+                        <span className="placeholder-icon">📦</span>
+                        <span className="placeholder-label">No image</span>
                     </div>
                 )}
 
@@ -192,6 +160,37 @@ function ItemCard({ item, currentUser, onStatusClick }) {
                     </div>
                 )}
             </div>
+
+            {/* Delete button - only shown in My Items (when onDelete prop is passed) */}
+            {onDelete && isOwner && (
+                <div className="item-card-delete-bar" onClick={e => e.stopPropagation()}>
+                    {confirmDelete ? (
+                        <div className="item-card-delete-confirm">
+                            <span className="delete-confirm-text">Delete this listing?</span>
+                            <button
+                                className="delete-confirm-yes"
+                                onClick={() => onDelete(item.id)}
+                            >
+                                Yes, Delete
+                            </button>
+                            <button
+                                className="delete-confirm-no"
+                                onClick={() => setConfirmDelete(false)}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            className="item-card-delete-btn"
+                            onClick={() => setConfirmDelete(true)}
+                            aria-label={`Delete ${item.title}`}
+                        >
+                            🗑️ Delete item
+                        </button>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
