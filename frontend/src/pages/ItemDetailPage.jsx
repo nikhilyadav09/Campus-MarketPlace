@@ -425,6 +425,30 @@ function ItemDetailPage({ currentUser }) {
                 {item.status === ITEM_STATUS.RESERVED && reservation && (
                     <div className="reservation-info">
                         <ReservationTimer expiresAt={reservation.expires_at} onExpired={refetch} />
+
+                        {/* Price breakup for both seller and buyer */}
+                        <div className="reservation-price-breakup">
+                            <div className="breakup-row">
+                                <span className="breakup-label">
+                                    {reservation.transaction_type === 'lease' ? 'Lease' : 'Purchase'} Total
+                                </span>
+                                <span className="breakup-value">
+                                    {formatPrice(reservation.transaction_type === 'lease' ? reservation.lease_amount : reservation.item_price)}
+                                    {reservation.transaction_type === 'lease' && reservation.lease_days && (
+                                        <span className="breakup-note"> ({reservation.lease_days} day{Number(reservation.lease_days) > 1 ? 's' : ''})</span>
+                                    )}
+                                </span>
+                            </div>
+                            <div className="breakup-row">
+                                <span className="breakup-label">Initial Paid</span>
+                                <span className="breakup-value breakup-paid">{formatPrice(Number(reservation.initial_amount || 0))}</span>
+                            </div>
+                            <div className="breakup-row">
+                                <span className="breakup-label">Remaining Due</span>
+                                <span className="breakup-value breakup-due">{formatPrice(Number(reservation.final_amount_due || 0))}</span>
+                            </div>
+                        </div>
+
                         {isBuyer && (
                             <div className="buyer-reservation-message">
                                 <div className="message-icon">⏳</div>

@@ -434,6 +434,52 @@
     margin-bottom: var(--spacing-lg);
 }
 
+/* ── Reservation price breakup ── */
+.reservation-price-breakup {
+    background: rgba(248, 250, 252, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(226, 232, 240, 0.6);
+    border-radius: 14px;
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.breakup-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.breakup-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.breakup-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.breakup-note {
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+}
+
+.breakup-paid {
+    color: #059669;
+}
+
+.breakup-due {
+    color: #d97706;
+    font-size: 17px;
+}
+
 .reservation-yours {
     font-size: var(--font-size-sm);
     color: var(--status-reserved-text);

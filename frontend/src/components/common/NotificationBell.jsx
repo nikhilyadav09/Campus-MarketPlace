@@ -72,11 +72,11 @@ function NotificationBell({ currentUser }) {
             }
         }
 
-        const targetReservationId = n.reservation_id;
         setIsOpen(false);
 
-        if (targetReservationId) navigate(`/reservations/${targetReservationId}`);
-        else if (n.item_id) navigate(`/items/${n.item_id}`);
+        // Always navigate to the item detail page where actions (confirm/cancel) live
+        if (n.item_id) navigate(`/items/${n.item_id}`);
+        else if (n.reservation_id) navigate(`/reservations/${n.reservation_id}`);
     };
 
     const handleMarkAllRead = async (e) => {

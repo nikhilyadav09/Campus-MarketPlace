@@ -207,8 +207,8 @@ function HomePage({ categories: propCategories }) {
                                 <path d="m21 21-4.3-4.3" />
                             </svg>
                         </div>
-                        <h3>Browse & Discover</h3>
-                        <p>Explore items listed by students in your campus. Filter by category to find exactly what you need.</p>
+                        <h3>Browse & Pick</h3>
+                        <p>Explore items listed by campus students. Filter by category, search by name, and choose to buy or lease what you need.</p>
                     </div>
                     <div className="feature-card">
                         <div className="feature-icon">
@@ -223,8 +223,8 @@ function HomePage({ categories: propCategories }) {
                                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                             </svg>
                         </div>
-                        <h3>Reserve Securely</h3>
-                        <p>Reserve items for 30 minutes to arrange meetup. No one else can buy it while you decide.</p>
+                        <h3>Reserve & Pay</h3>
+                        <p>Pay a small upfront amount via Razorpay to lock the item. No one else can grab it while the seller reviews your request.</p>
                     </div>
                     <div className="feature-card">
                         <div className="feature-icon">
@@ -241,8 +241,8 @@ function HomePage({ categories: propCategories }) {
                                 <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                             </svg>
                         </div>
-                        <h3>Meet & Trade</h3>
-                        <p>Meet on campus to complete the transaction. Safe, local, and convenient.</p>
+                        <h3>Confirm & Connect</h3>
+                        <p>Seller confirms, you pay the remaining amount, and both get each other's contact details to meet up and complete the handover.</p>
                     </div>
                 </div>
             </section>
