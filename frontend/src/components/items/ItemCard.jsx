@@ -119,25 +119,6 @@ function ItemCard({ item, currentUser, onStatusClick, onDelete }) {
                 {item.description && (
                     <p className="item-description">{item.description}</p>
                 )}
-                {/* Mode tags removed as per user request (redundant with bottom pricing) */}
-                {isOwner && (isSold || item.status === ITEM_STATUS.RESERVED) && item.buyer_name && (
-                    <div className="item-buyer-block">
-                        <div className="buyer-block-header">
-                            <span className="buyer-icon">{isSold ? '🎉' : '⏳'}</span>
-                            <span className="buyer-status-text">{isSold ? 'Sold to' : 'Reserved by'}</span>
-                        </div>
-                        <div className="buyer-block-details">
-                            <strong className="buyer-name">{item.buyer_name}</strong>
-                            <div className="buyer-contact-row">
-                                {item.buyer_mobile && <span className="buyer-contact-item">📱 {item.buyer_mobile}</span>}
-                                {item.buyer_hostel && item.buyer_room && (
-                                    <span className="buyer-contact-item">🏠 {item.buyer_hostel}, R-{item.buyer_room}</span>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
                 {/* Unified Pricing Block - Stick to Bottom */}
                 <div className="item-card-pricing">
                     <div className="price-main">
@@ -151,14 +132,6 @@ function ItemCard({ item, currentUser, onStatusClick, onDelete }) {
                         </div>
                     )}
                 </div>
-
-                {/* Footer for Deal info when sold */}
-                {isOwner && item.status === ITEM_STATUS.SOLD && item.deal_amount && (
-                    <div className="item-card-deal-footer">
-                        <span className="deal-label">Closed deal:</span>
-                        <span className="deal-value">{formatPrice(item.deal_amount)}</span>
-                    </div>
-                )}
             </div>
 
             {/* Delete button - only shown in My Items (when onDelete prop is passed) */}

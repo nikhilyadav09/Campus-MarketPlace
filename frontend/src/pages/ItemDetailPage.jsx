@@ -447,8 +447,8 @@ function ItemDetailPage({ currentUser }) {
                     </div>
                 )}
 
-                {/* Always Show Seller Contact Info for potential buyers */}
-                {!isOwner && (
+                {/* Always Show Seller Contact Info for potential buyers - but not when sold */}
+                {!isOwner && item.status !== ITEM_STATUS.SOLD && (
                     <div className="contact-info-card">
                         <h4>📞 Seller Contact</h4>
                         <div className="contact-details">
@@ -477,23 +477,37 @@ function ItemDetailPage({ currentUser }) {
                     </div>
                 )}
 
-                {/* Show success message when item is sold and buyer was the one who reserved */}
+                {/* When SOLD: buyer sees seller contact details to connect */}
                 {item.status === ITEM_STATUS.SOLD && reservation?.buyer_id === currentUser?.id && (
-                    <div className="sale-confirmed-message">
-                        <div className="message-icon">✅</div>
-                        <div className="message-content">
-                            <strong>Order Confirmed!</strong>
-                            <p>Contact seller <strong>{item.seller_name}</strong> ({item.seller_email}) to complete the transaction.</p>
+                    <>
+                        <div className="sale-confirmed-message">
+                            <div className="message-icon">✅</div>
+                            <div className="message-content">
+                                <strong>Order Confirmed!</strong>
+                                <p>You purchased this item. Contact the seller to arrange pickup.</p>
+                            </div>
                         </div>
-                    </div>
+                        <div className="contact-info-card">
+                            <h4>📞 Seller Contact</h4>
+                            <div className="contact-details">
+                                <p><strong>{item.seller_name}</strong></p>
+                                {item.seller_email && <p>📧 {item.seller_email}</p>}
+                                {item.seller_mobile && <p>📱 {item.seller_mobile}</p>}
+                                {item.seller_hostel && item.seller_room && (
+                                    <p>🏠 {item.seller_hostel}, Room {item.seller_room}</p>
+                                )}
+                            </div>
+                        </div>
+                    </>
                 )}
 
-                {/* Show buyer contact info to seller when item is SOLD */}
+                {/* When SOLD: seller sees buyer contact details to connect */}
                 {isOwner && item.status === ITEM_STATUS.SOLD && item.buyer_name && (
                     <div className="contact-info-card">
                         <h4>✅ Sold to</h4>
                         <div className="contact-details">
                             <p><strong>{item.buyer_name}</strong></p>
+                            {item.buyer_email && <p>📧 {item.buyer_email}</p>}
                             {item.buyer_mobile && <p>📱 {item.buyer_mobile}</p>}
                             {item.buyer_hostel && item.buyer_room && (
                                 <p>🏠 {item.buyer_hostel}, Room {item.buyer_room}</p>
