@@ -37,6 +37,7 @@
 
 .btn-primary:hover:not(:disabled) {
     background: var(--accent-hover);
+    color: var(--text-white);
 }
 
 .btn-secondary {

@@ -31,23 +31,23 @@ function LoginPage() {
         <div className="auth-page">
             <div className="auth-card">
                 <div className="auth-header">
-                    <h1 className="auth-title">Continue with Google</h1>
+                    <h1 className="auth-title">Welcome</h1>
                     <p className="auth-subtitle">
-                        then complete your student profile once.
+                        Sign in to buy, sell, lease and connect with students.
                     </p>
                 </div>
 
                 <div className="auth-oauth-stack auth-oauth-stack--solo">
                     <button type="button" className="auth-google-button" onClick={handleGoogleLogin}>
-                        <span className="auth-google-icon">G</span>
-                        Continue with Google
+                        <span className="auth-google-icon"></span>
+                        Sign in with Google
                     </button>
                 </div>
 
                 {error && <div className="auth-error">{error}</div>}
 
                 <div className="auth-hint">
-                    <strong>First sign-in:</strong> we will save your Google name/email, then ask for year, mobile number, hostel, and room details.
+                    <strong>New here?</strong> We'll securely use your Google account, then ask a few quick questions to set up your student profile.
                 </div>
             </div>
         </div>

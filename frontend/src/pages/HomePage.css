@@ -195,15 +195,15 @@
     animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s backwards;
 }
 
-.btn-primary {
+.hero-actions .btn-primary,
+.cta-section .btn-primary {
     display: inline-flex;
     align-items: center;
     gap: 10px;
     padding: 16px 32px;
     background: var(--text-white);
-    color: var(--primary-dark);
+    color: #1e3a8a; /* Dark blue for contrast */
     border-radius: var(--radius-full);
-    /* Rounded pills */
     font-weight: 700;
     font-size: var(--font-size-base);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -211,16 +211,19 @@
     border: 2px solid transparent;
 }
 
-.btn-primary:hover {
+.hero-actions .btn-primary:hover,
+.cta-section .btn-primary:hover {
     transform: translateY(-3px) scale(1.02);
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    background: #f8fafc;
 }
 
-.btn-primary:active {
+.hero-actions .btn-primary:active,
+.cta-section .btn-primary:active {
     transform: translateY(-1px);
 }
 
-.btn-secondary {
+.hero-actions .btn-secondary {
     display: inline-flex;
     align-items: center;
     gap: 10px;
@@ -236,7 +239,7 @@
     transition: all 0.3s ease;
 }
 
-.btn-secondary:hover {
+.hero-actions .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.2);
     transform: translateY(-3px);
     border-color: rgba(255, 255, 255, 0.4);
@@ -709,9 +712,7 @@
     font-weight: 500;
 }
 
-.cta-section .btn-primary {
-    display: inline-flex;
-}
+
 
 /* ============================================
    RESPONSIVE DESIGN

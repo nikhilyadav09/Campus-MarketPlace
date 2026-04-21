@@ -91,9 +91,7 @@
 body {
   margin: 0;
   font-family: var(--font-family);
-  /* Soft base background color */
-  background: linear-gradient(180deg, #f0f4f8 0%, #e8eef5 50%, #dfe7f0 100%);
-  background-attachment: fixed;
+  background: #f0f4f8; /* simple solid fallback */
   color: var(--text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -103,10 +101,6 @@ body {
   overflow-x: hidden;
 }
 
-/* ============================================
-   CAMPUS BACKGROUND IMAGE LAYER
-   Full-screen campus background without repeating
-   ============================================ */
 body::before {
   content: '';
   position: fixed;
@@ -116,19 +110,15 @@ body::before {
   bottom: 0;
   width: 100%;
   height: 100%;
-  /* Campus background image */
-  background-image: url('./assets/campus-bg.png');
-  /* Cover entire viewport - no repeat */
+  background-image: url('./assets/university_cover.jpeg');
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
-  /* Subtle visibility - 25% opacity */
-  opacity: 1;
+  opacity: 0.35; /* ← Sweet spot: visible but not distracting */
   z-index: -2;
   pointer-events: none;
 }
 
-/* Light overlay to ensure text readability */
 body::after {
   content: '';
   position: fixed;
@@ -138,11 +128,7 @@ body::after {
   bottom: 0;
   width: 100%;
   height: 100%;
-  /* Reduced overlay for more image visibility */
-  background: linear-gradient(180deg,
-      rgba(240, 244, 248, 0.5) 0%,
-      rgba(232, 238, 245, 0.4) 50%,
-      rgba(223, 231, 240, 0.5) 100%);
+  background: rgba(240, 244, 248, 0.55); /* ← Light wash, not a wall */
   z-index: -1;
   pointer-events: none;
 }
@@ -252,4 +238,16 @@ button {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--glass-border);
+}
+
+/* Make all page cards feel integrated with the background */
+.item-card,
+.reservation-card,
+.auth-card,
+.feature-card,
+.category-card,
+.hero-card {
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }

@@ -135,12 +135,12 @@ function HomePage({ categories: propCategories }) {
                     <div className="hero-actions">
                         <Link to="/items" className="btn-primary">
                             <span>Browse Items</span>
+                        </Link>
+                        <Link to="/items/new" className="btn-secondary">
+                            <span>Start Selling / Leasing</span>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M5 12h14M12 5l7 7-7 7" />
                             </svg>
-                        </Link>
-                        <Link to="/items/new" className="btn-secondary">
-                            <span>Start Selling</span>
                         </Link>
                     </div>
                     <div className="hero-stats">
@@ -224,7 +224,7 @@ function HomePage({ categories: propCategories }) {
                             </svg>
                         </div>
                         <h3>Reserve & Pay</h3>
-                        <p>Pay a small upfront amount via Razorpay to lock the item. No one else can grab it while the seller reviews your request.</p>
+                        <p>Pay a small amount via Razorpay to lock the item. No one else can grab it while the seller reviews your request. If the seller cancels, your amount is fully refunded.</p>
                     </div>
                     <div className="feature-card">
                         <div className="feature-icon">

@@ -68,10 +68,16 @@ function UserMenu({ currentUser }) {
     return (
         <div className="user-menu" ref={menuRef}>
             <button
-                className={`user-menu-trigger ${isOpen ? 'active' : ''}`}
-                onClick={() => setIsOpen((previous) => !previous)}
-                aria-expanded={isOpen}
-                aria-haspopup="true"
+                className={`user-menu-trigger ${isOpen && currentUser ? 'active' : ''} ${!currentUser ? 'login-trigger' : ''}`}
+                onClick={() => {
+                    if (!currentUser) {
+                        handleGoogleLogin();
+                    } else {
+                        setIsOpen((previous) => !previous);
+                    }
+                }}
+                aria-expanded={isOpen && !!currentUser}
+                aria-haspopup={currentUser ? "true" : "false"}
             >
                 {currentUser ? (
                     <>
@@ -82,14 +88,14 @@ function UserMenu({ currentUser }) {
                             {getInitials(currentUser.name)}
                         </div>
                         <span className="user-menu-name-main">{currentUser.name}</span>
+                        <span className="user-menu-chevron">▼</span>
                     </>
                 ) : (
                     <>
-                        <div className="user-menu-avatar-main guest">👤</div>
-                        <span className="user-menu-name-main">Account</span>
+                        <div className="login-icon-google"></div>
+                        <span className="user-menu-name-main">Sign In</span>
                     </>
                 )}
-                <span className="user-menu-chevron">▼</span>
             </button>
 
             {isOpen && <div className="user-menu-backdrop" onClick={() => setIsOpen(false)} />}
