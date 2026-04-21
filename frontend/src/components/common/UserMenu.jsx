@@ -92,8 +92,16 @@ function UserMenu({ currentUser }) {
                     </>
                 ) : (
                     <>
-                        <div className="login-icon-google"></div>
-                        <span className="user-menu-name-main">Sign In</span>
+                        {/* Blinking neon corner sparks */}
+                        <span className="neon-spark neon-spark-1" />
+                        <span className="neon-spark neon-spark-2" />
+                        <span className="neon-spark neon-spark-3" />
+
+                        {/* Google icon */}
+                        <div className="login-icon-google" />
+
+                        {/* Button text */}
+                        <span className="user-menu-name-main">Sign In with Google</span>
                     </>
                 )}
             </button>

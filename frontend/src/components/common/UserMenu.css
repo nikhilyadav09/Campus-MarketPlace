@@ -271,7 +271,6 @@
     border: 1px solid var(--border-color);
 }
 
-
 .user-menu-auth-actions--stacked {
     flex-direction: column;
 }
@@ -339,79 +338,152 @@
     }
 }
 
-/* Login Trigger Button */
+
+/* ============================================
+   Login Trigger — Neon Gaming Style
+   ============================================ */
+
 .login-trigger {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
-    padding: 10px 24px;
-    box-shadow: 0 0 15px rgba(124, 58, 237, 0.4);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px 10px 10px;
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.3) 0%, rgba(124, 58, 237, 0.25) 100%);
+    border: 1.5px solid rgba(167, 139, 250, 0.7);
+    border-radius: 9999px;
+    color: #ffffff;
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    cursor: pointer;
     position: relative;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    animation: button-glow-pulse 2s infinite alternate;
+    overflow: visible;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: neon-halo-breathe 2s ease-in-out infinite alternate;
 }
 
-/* Modern Shine Sweep Effect */
+/* breathing outer glow halo — always visible, no hover needed */
+@keyframes neon-halo-breathe {
+    from {
+        box-shadow:
+            0 0 8px 1px rgba(139, 92, 246, 0.45),
+            0 0 20px 2px rgba(139, 92, 246, 0.2),
+            0 0 40px 4px rgba(139, 92, 246, 0.08);
+    }
+    to {
+        box-shadow:
+            0 0 16px 3px rgba(167, 139, 250, 0.85),
+            0 0 40px 6px rgba(139, 92, 246, 0.45),
+            0 0 80px 10px rgba(139, 92, 246,0.18),
+            0 0 4px 1px rgba(236, 72, 153, 0.25);
+    }
+}
+
+/* top gloss line */
+.login-trigger::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 12%;
+    right: 12%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+    border-radius: 9999px;
+    pointer-events: none;
+}
+
+/* fast electric scan sweep */
 .login-trigger::after {
     content: '';
     position: absolute;
     top: 0;
-    left: -100%;
-    width: 50%;
+    left: -60%;
+    width: 30%;
     height: 100%;
-    background: linear-gradient(
-        to right,
-        transparent,
-        rgba(255, 255, 255, 0.4),
-        transparent
-    );
-    transform: skewX(-25deg);
-    animation: shine-sweep 3s infinite;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.18), transparent);
+    transform: skewX(-15deg);
+    animation: neon-scan 2.5s ease-in-out infinite;
+    pointer-events: none;
+    border-radius: 9999px;
 }
 
-@keyframes shine-sweep {
-    0% { left: -100%; }
-    15% { left: 150%; }
-    100% { left: 150%; }
+@keyframes neon-scan {
+    0%   { left: -60%; }
+    40%  { left: 130%; }
+    100% { left: 130%; }
 }
 
-@keyframes button-glow-pulse {
-    from {
-        box-shadow: 0 0 10px rgba(124, 58, 237, 0.4);
-        transform: scale(1);
-    }
-    to {
-        box-shadow: 0 0 20px rgba(124, 58, 237, 0.7), 0 0 35px rgba(124, 58, 237, 0.2);
-        transform: scale(1.02);
-    }
-}
-
-.login-trigger:hover {
-    transform: translateY(-2px) scale(1.04);
-    box-shadow: 0 0 30px rgba(124, 58, 237, 0.8);
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-}
-
-.login-icon-google {
-    width: 20px;
-    height: 20px;
-    background-color: white;
-    border-radius: 50%;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%23FFC107' d='M43.6 20.5H42V20H24v8h11.3C33.6 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12S17.4 12 24 12c3 0 5.7 1.1 7.8 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.3-.4-3.5Z'/%3E%3Cpath fill='%23FF3D00' d='M6.3 14.7l6.6 4.8C14.7 15.1 18.9 12 24 12c3 0 5.7 1.1 7.8 3l5.7-5.7C34 6.1 29.3 4 24 4c-7.7 0-14.3 4.3-17.7 10.7Z'/%3E%3Cpath fill='%234CAF50' d='M24 44c5.2 0 9.8-2 13.3-5.2l-6.2-5.2C29 35.2 26.6 36 24 36c-5.2 0-9.6-3.3-11.2-8l-6.5 5C9.7 39.5 16.3 44 24 44Z'/%3E%3Cpath fill='%231976D2' d='M43.6 20.5H42V20H24v8h11.3c-1 2.9-3 5.2-5.8 6.7l6.2 5.2C39.3 36.6 44 31 44 24c0-1.2-.1-2.3-.4-3.5Z'/%3E%3C/svg%3E");
-    background-size: cover;
-    display: inline-block;
-}
-
+/* neon glowing text */
 .login-trigger .user-menu-name-main {
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    margin-left: 2px;
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    color: #ffffff;
+    text-shadow:
+        0 0 8px rgba(167, 139, 250, 0.95),
+        0 0 20px rgba(139, 92, 246, 0.65);
+    position: relative;
+    z-index: 1;
 }
 
+/* Google icon — white pill */
+.login-trigger .login-icon-google {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%23FFC107' d='M43.6 20.5H42V20H24v8h11.3C33.6 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12S17.4 12 24 12c3 0 5.7 1.1 7.8 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.3-.4-3.5Z'/%3E%3Cpath fill='%23FF3D00' d='M6.3 14.7l6.6 4.8C14.7 15.1 18.9 12 24 12c3 0 5.7 1.1 7.8 3l5.7-5.7C34 6.1 29.3 4 24 4c-7.7 0-14.3 4.3-17.7 10.7Z'/%3E%3Cpath fill='%234CAF50' d='M24 44c5.2 0 9.8-2 13.3-5.2l-6.2-5.2C29 35.2 26.6 36 24 36c-5.2 0-9.6-3.3-11.2-8l-6.5 5C9.7 39.5 16.3 44 24 44Z'/%3E%3Cpath fill='%231976D2' d='M43.6 20.5H42V20H24v8h11.3c-1 2.9-3 5.2-5.8 6.7l6.2 5.2C39.3 36.6 44 31 44 24c0-1.2-.1-2.3-.4-3.5Z'/%3E%3C/svg%3E");
+    background-size: 70%;
+    background-repeat: no-repeat;
+    background-position: center;
+    display: inline-flex;
+    flex-shrink: 0;
+    box-shadow: 0 0 8px rgba(167, 139, 250, 0.5), 0 0 16px rgba(139, 92, 246, 0.3);
+    position: relative;
+    z-index: 1;
+}
+
+/* hover — more intense glow + scale */
+.login-trigger:hover {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.45) 0%, rgba(139, 92, 246, 0.4) 100%);
+    border-color: rgba(196, 181, 253, 0.95);
+    transform: scale(1.05) translateY(-1px);
+    animation: none;
+    box-shadow:
+        0 0 20px 4px rgba(167, 139, 250, 0.9),
+        0 0 50px 8px rgba(139, 92, 246, 0.5),
+        0 0 90px 12px rgba(139, 92, 246, 0.2);
+}
+
+.login-trigger:active {
+    transform: scale(0.97);
+}
+
+/* blinking corner sparks */
+.login-trigger .neon-spark {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #a78bfa;
+    box-shadow: 0 0 6px 2px rgba(167, 139, 250, 0.9);
+    pointer-events: none;
+    z-index: 2;
+    animation: spark-blink 1.8s ease-in-out infinite;
+}
+
+.login-trigger .neon-spark-1 { top: -2px; left: 22px; animation-delay: 0s; }
+.login-trigger .neon-spark-2 { top: -2px; right: 22px; animation-delay: 0.7s; }
+.login-trigger .neon-spark-3 { bottom: -2px; left: 36px; animation-delay: 1.3s; }
+
+@keyframes spark-blink {
+    0%, 100% { opacity: 0; transform: scale(0.4); }
+    50%       { opacity: 1; transform: scale(1.4); }
+}
+
+/* keep text visible on mobile */
 @media (max-width: 640px) {
     .login-trigger .user-menu-name-main {
-        display: block; /* Don't hide the login text on mobile */
+        display: block;
     }
 }
