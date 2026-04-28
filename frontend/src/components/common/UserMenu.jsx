@@ -101,7 +101,10 @@ function UserMenu({ currentUser }) {
                         <div className="login-icon-google" />
 
                         {/* Button text */}
-                        <span className="user-menu-name-main">Sign In with Google</span>
+                        <span className="user-menu-name-main">
+                            <span className="text-desktop">Sign In with Google</span>
+                            <span className="text-mobile">Sign In</span>
+                        </span>
                     </>
                 )}
             </button>

@@ -482,8 +482,22 @@
 }
 
 /* keep text visible on mobile */
+.text-mobile {
+    display: none;
+}
+
 @media (max-width: 640px) {
+    .login-trigger {
+        padding: 6px 14px 6px 6px;
+        gap: 6px;
+    }
     .login-trigger .user-menu-name-main {
         display: block;
+    }
+    .text-desktop {
+        display: none;
+    }
+    .text-mobile {
+        display: inline;
     }
 }
